@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useHistory } from '@/hooks/useHistory';
-import { useCategories } from '@/hooks/useCategories';
+import { CategoriesContext } from '@/context/CategoriesContext';
 import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 
 export function HistoryFilters() {
   const { filters, setFilters, clearFilters } = useHistory();
-  const { incomeCategories, expenseCategories } = useCategories();
+  const categoriesContext = useContext(CategoriesContext);
+  const incomeCategories = categoriesContext?.incomeCategories || [];
+  const expenseCategories = categoriesContext?.expenseCategories || [];
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Combine all categories for the filter

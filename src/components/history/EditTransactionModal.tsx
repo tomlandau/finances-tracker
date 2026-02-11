@@ -1,6 +1,6 @@
-import { useState, FormEvent, useEffect, useMemo } from 'react';
+import { useState, FormEvent, useMemo, useContext } from 'react';
 import type { Transaction } from '@/types/history.types';
-import { useCategories } from '@/hooks/useCategories';
+import { CategoriesContext } from '@/context/CategoriesContext';
 import { api } from '@/services/api';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -15,7 +15,9 @@ interface EditTransactionModalProps {
 }
 
 export function EditTransactionModal({ transaction, onSuccess, onCancel }: EditTransactionModalProps) {
-  const { incomeCategories, expenseCategories } = useCategories();
+  const categoriesContext = useContext(CategoriesContext);
+  const incomeCategories = categoriesContext?.incomeCategories || [];
+  const expenseCategories = categoriesContext?.expenseCategories || [];
   const [formData, setFormData] = useState({
     amount: transaction.amount.toString(),
     categoryId: transaction.categoryId,
