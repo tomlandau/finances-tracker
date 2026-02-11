@@ -16,39 +16,51 @@ const categoriesHandler = async (req, res) => {
   }
 
   try {
-    console.log('=== Debug Info ===');
-    console.log('API Key exists:', !!process.env.AIRTABLE_API_KEY);
-    console.log('API Key prefix:', process.env.AIRTABLE_API_KEY?.substring(0, 10) + '...');
-    console.log('Base ID:', process.env.AIRTABLE_BASE_ID);
-    console.log('Table name:', process.env.AIRTABLE_INCOME_CATEGORIES_TABLE);
-    console.log('Status field:', process.env.AIRTABLE_CATEGORY_STATUS_FIELD);
-    console.log('Name field:', process.env.AIRTABLE_CATEGORY_NAME_FIELD);
+    // Get type from query param (default: 'income' for backwards compatibility)
+    const type = req.query.type || 'income';
+
+    // Validation
+    if (!['income', 'expense'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid type. Must be "income" or "expense"' });
+    }
+
+    // Select correct table based on type
+    const tableName = type === 'income'
+      ? process.env.AIRTABLE_INCOME_CATEGORIES_TABLE
+      : process.env.AIRTABLE_EXPENSE_CATEGORIES_TABLE;
+
+    // Select correct field names based on type
+    const nameField = type === 'income'
+      ? process.env.AIRTABLE_CATEGORY_NAME_FIELD
+      : process.env.AIRTABLE_EXPENSE_CATEGORY_NAME_FIELD;
+
+    const statusField = type === 'income'
+      ? process.env.AIRTABLE_CATEGORY_STATUS_FIELD
+      : process.env.AIRTABLE_EXPENSE_CATEGORY_STATUS_FIELD;
 
     const Airtable = (await import('airtable')).default;
     const base = new Airtable({
       apiKey: process.env.AIRTABLE_API_KEY
     }).base(process.env.AIRTABLE_BASE_ID);
 
-    const table = base(process.env.AIRTABLE_INCOME_CATEGORIES_TABLE);
+    const table = base(tableName);
 
-    // Try without filter first to see all records
+    // Fetch categories with status = "פעיל"
     const records = await table
       .select({
-        // filterByFormula: `{${process.env.AIRTABLE_CATEGORY_STATUS_FIELD}} = "פעיל"`,
-        sort: [{ field: process.env.AIRTABLE_CATEGORY_NAME_FIELD, direction: 'asc' }]
+        filterByFormula: `{${statusField}} = "פעיל"`,
+        sort: [{ field: nameField, direction: 'asc' }]
       })
       .all();
 
     console.log('Records found:', records.length);
-    console.log('Filter formula:', `{${process.env.AIRTABLE_CATEGORY_STATUS_FIELD}} = "פעיל"`);
 
     const categories = records.map(record => ({
       id: record.id,
-      name: record.get(process.env.AIRTABLE_CATEGORY_NAME_FIELD),
+      name: record.get(nameField),
       active: true
     }));
 
-    console.log('Categories:', categories);
     return res.status(200).json({ categories });
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -129,9 +141,72 @@ const incomeHandler = async (req, res) => {
   }
 };
 
+const expenseHandler = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { amount, categoryId, date, vat, vatType, description } = req.body;
+
+    console.log('=== Expense Submission Debug ===');
+    console.log('Request body:', req.body);
+
+    // Validation
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+    if (!categoryId) {
+      return res.status(400).json({ error: 'Category is required' });
+    }
+    if (!date) {
+      return res.status(400).json({ error: 'Date is required' });
+    }
+    if (!vat) {
+      return res.status(400).json({ error: 'Invalid VAT rate' });
+    }
+    if (!vatType) {
+      return res.status(400).json({ error: 'Invalid VAT type' });
+    }
+
+    const Airtable = (await import('airtable')).default;
+    const base = new Airtable({
+      apiKey: process.env.AIRTABLE_API_KEY
+    }).base(process.env.AIRTABLE_BASE_ID);
+
+    const table = base(process.env.AIRTABLE_EXPENSE_TABLE);
+
+    const recordData = {
+      [process.env.AIRTABLE_EXPENSE_DATE_FIELD]: date,
+      [process.env.AIRTABLE_EXPENSE_CATEGORY_FIELD]: [categoryId],
+      [process.env.AIRTABLE_EXPENSE_AMOUNT_FIELD]: amount,
+      [process.env.AIRTABLE_EXPENSE_VAT_FIELD]: vat,
+      [process.env.AIRTABLE_EXPENSE_VAT_TYPE_FIELD]: vatType,
+      ...(description && { [process.env.AIRTABLE_EXPENSE_DESCRIPTION_FIELD]: description })
+    };
+
+    console.log('Creating expense record with data:', recordData);
+
+    const record = await table.create(recordData);
+
+    console.log('Expense record created successfully:', record.id);
+    return res.status(201).json({
+      success: true,
+      id: record.id
+    });
+  } catch (error) {
+    console.error('Error creating expense entry:', error);
+    return res.status(500).json({
+      error: 'Failed to create expense entry',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
 // Routes
 app.get('/api/categories', categoriesHandler);
 app.post('/api/income', incomeHandler);
+app.post('/api/expense', expenseHandler);
 
 const PORT = 3001;
 app.listen(PORT, () => {

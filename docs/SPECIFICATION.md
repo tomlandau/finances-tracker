@@ -267,13 +267,112 @@ AIRTABLE_INCOME_DESCRIPTION_FIELD=תיאור/הערות
 
 ---
 
-## Future Enhancements (Out of MVP Scope)
+## Phase 2: Expense Tracking ✅
 
-### Phase 2: Expense Tracking
-- טבלת הוצאות
-- טופס הזנת הוצאות
-- קטגוריות הוצאות
-- Toggle בין הכנסות/הוצאות
+### Tables
+
+#### 3. הוצאות (Expense Records)
+| Field Name | Type | Description |
+|------------|------|-------------|
+| תאריך | Date | תאריך ההוצאה |
+| מקור הוצאה | Linked Record | קישור לטבלת מקורות הוצאה |
+| עסקי/בית | Lookup | מ-מקור הוצאה |
+| תחום | Lookup | מ-מקור הוצאה |
+| סוג הוצאה | Lookup | מ-מקור הוצאה |
+| תאריך חידוש הוצאה | Formula | חישוב תאריך ההוצאה הבאה לפי סוג ההוצאה |
+| יצירת הוצאות מחזוריות | Checkbox | האם ליצור אוטומטית הוצאות חוזרות |
+| מע"מ | Single Select | "0" או "0.18" |
+| הזנה עם או בלי מע"מ | Single Select | "לפני/ללא מע"מ" או "כולל מע"מ" |
+| סכום הזנה | Number | הסכום שהמשתמש מזין |
+| סכום נטו | Formula | מחושב אוטומטית |
+| סכום מע"מ | Formula | מחושב אוטומטית |
+| סכום ברוטו | Formula | מחושב אוטומטית |
+| הערות נוספות | Long Text | אופציונלי |
+
+#### 4. מקורות הוצאה (Expense Categories)
+| Field Name | Type | Options/Description |
+|------------|------|---------------------|
+| תיאור/הערות | Long Text | **שם הקטגוריה** (משמש כ-name field) |
+| עסקי/בית | Single Select | עסק תום, עסק יעל, עסק - משותף, בית |
+| תחום | Single Select | רשימה פנימית בטבלה |
+| סוג הוצאה | Single Select | קבועה חודשית, קבועה שנתית, משתנה, קבועה דו שנתית, חד פעמית, קבועה שבוטלה, קבועה דו חודשית, קבועה חודשית עם סכום משתנה |
+| סטטוס | Single Select | "פעיל" או "לא פעיל" |
+
+**Important Note:** Unlike income categories which use "שם" as the name field, expense categories use **"תיאור/הערות"** as the category name field.
+
+### API Endpoints - Phase 2
+
+#### GET /api/categories?type=expense
+**Purpose:** שליפת קטגוריות הוצאה פעילות
+
+**Response:**
+```json
+{
+  "categories": [
+    {
+      "id": "rec123abc",
+      "name": "Sumit - תום"
+    }
+  ]
+}
+```
+
+**Airtable Query:**
+- Table: מקורות הוצאה
+- Filter: סטטוס = "פעיל"
+- Sort: תיאור/הערות (ascending)
+
+#### POST /api/expense
+**Purpose:** יצירת רשומת הוצאה חדשה
+
+**Request Body:**
+```json
+{
+  "amount": 1000,
+  "categoryId": "rec123abc",
+  "date": "2025-01-15",
+  "vat": "0.18",
+  "vatType": "לפני/ללא מע\"מ",
+  "description": "הערה אופציונלית"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "id": "rec789xyz"
+}
+```
+
+### Environment Variables - Phase 2
+
+Add to .env.local:
+```bash
+# Expense Tables
+AIRTABLE_EXPENSE_TABLE=הוצאות
+AIRTABLE_EXPENSE_CATEGORIES_TABLE=מקורות הוצאה
+
+# Expense Category Fields
+AIRTABLE_EXPENSE_CATEGORY_NAME_FIELD=תיאור/הערות
+AIRTABLE_EXPENSE_CATEGORY_STATUS_FIELD=סטטוס
+
+# Expense Record Fields
+AIRTABLE_EXPENSE_DATE_FIELD=תאריך
+AIRTABLE_EXPENSE_CATEGORY_FIELD=מקור הוצאה
+AIRTABLE_EXPENSE_AMOUNT_FIELD=סכום הזנה
+AIRTABLE_EXPENSE_VAT_FIELD=מע"מ
+AIRTABLE_EXPENSE_VAT_TYPE_FIELD=הזנה עם או בלי מע"מ
+AIRTABLE_EXPENSE_DESCRIPTION_FIELD=הערות נוספות
+```
+
+## Future Enhancements (Out of Scope)
+
+### Phase 3: History & Reports
+- רשימת 20 רשומות אחרונות
+- פילטר לפי תאריך/קטגוריה
+- עריכה ומחיקה של רשומות
+- Pull-to-refresh
 
 ### Phase 3: History & Reports
 - רשימת 20 רשומות אחרונות

@@ -16,6 +16,14 @@ export default async function handler(
   }
 
   try {
+    // Get type from query param (default: 'income' for backwards compatibility)
+    const type = (req.query.type as string) || 'income';
+
+    // Validation
+    if (!['income', 'expense'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid type. Must be "income" or "expense"' });
+    }
+
     // Import Airtable dynamically
     const Airtable = (await import('airtable')).default;
 
@@ -24,19 +32,33 @@ export default async function handler(
       apiKey: process.env.AIRTABLE_API_KEY
     }).base(process.env.AIRTABLE_BASE_ID!);
 
-    const table = base(process.env.AIRTABLE_INCOME_CATEGORIES_TABLE!);
+    // Select correct table based on type
+    const tableName = type === 'income'
+      ? process.env.AIRTABLE_INCOME_CATEGORIES_TABLE!
+      : process.env.AIRTABLE_EXPENSE_CATEGORIES_TABLE!;
+
+    // Select correct field names based on type
+    const nameField = type === 'income'
+      ? process.env.AIRTABLE_CATEGORY_NAME_FIELD!
+      : process.env.AIRTABLE_EXPENSE_CATEGORY_NAME_FIELD!;
+
+    const statusField = type === 'income'
+      ? process.env.AIRTABLE_CATEGORY_STATUS_FIELD!
+      : process.env.AIRTABLE_EXPENSE_CATEGORY_STATUS_FIELD!;
+
+    const table = base(tableName);
 
     // Fetch categories with status = "פעיל"
     const records = await table
       .select({
-        filterByFormula: `{${process.env.AIRTABLE_CATEGORY_STATUS_FIELD}} = "פעיל"`,
-        sort: [{ field: process.env.AIRTABLE_CATEGORY_NAME_FIELD!, direction: 'asc' }]
+        filterByFormula: `{${statusField}} = "פעיל"`,
+        sort: [{ field: nameField, direction: 'asc' }]
       })
       .all();
 
     const categories: Category[] = records.map(record => ({
       id: record.id,
-      name: record.get(process.env.AIRTABLE_CATEGORY_NAME_FIELD!) as string,
+      name: record.get(nameField) as string,
       active: true
     }));
 

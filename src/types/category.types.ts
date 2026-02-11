@@ -1,3 +1,5 @@
+export type CategoryType = 'income' | 'expense';
+
 export interface Category {
   id: string;
   name: string;
@@ -5,8 +7,10 @@ export interface Category {
 }
 
 export interface CategoriesState {
-  categories: Category[];
+  incomeCategories: Category[];
+  expenseCategories: Category[];
   loading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetchIncome: () => Promise<void>;
+  refetchExpense: () => Promise<void>;
 }
