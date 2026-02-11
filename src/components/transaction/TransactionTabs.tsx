@@ -6,7 +6,8 @@ export function TransactionTabs() {
 
   const tabs: Array<{ id: TransactionType; label: string }> = [
     { id: 'income', label: 'הכנסות' },
-    { id: 'expense', label: 'הוצאות' }
+    { id: 'expense', label: 'הוצאות' },
+    { id: 'history', label: 'היסטוריה' }
   ];
 
   return (

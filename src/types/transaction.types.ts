@@ -1,4 +1,4 @@
-export type TransactionType = 'income' | 'expense';
+export type TransactionType = 'income' | 'expense' | 'history';
 
 export interface TransactionState {
   type: TransactionType;

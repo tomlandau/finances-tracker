@@ -5,8 +5,10 @@ import { Layout } from '@/components/layout/Layout';
 import { TransactionTabs } from '@/components/transaction/TransactionTabs';
 import { IncomeForm } from '@/components/income/IncomeForm';
 import { ExpenseForm } from '@/components/expense/ExpenseForm';
+import { HistoryView } from '@/components/history/HistoryView';
 import { CategoriesProvider } from '@/context/CategoriesContext';
 import { TransactionProvider } from '@/context/TransactionContext';
+import { HistoryProvider } from '@/context/HistoryContext';
 
 function AppContent() {
   const { type } = useTransactionType();
@@ -21,11 +23,13 @@ function AppContent() {
             <h2 className="text-lg font-semibold mb-4 text-right">הוסף הכנסה חדשה</h2>
             <IncomeForm />
           </>
-        ) : (
+        ) : type === 'expense' ? (
           <>
             <h2 className="text-lg font-semibold mb-4 text-right">הוסף הוצאה חדשה</h2>
             <ExpenseForm />
           </>
+        ) : (
+          <HistoryView />
         )}
       </div>
     </Layout>
@@ -42,7 +46,9 @@ function App() {
   return (
     <TransactionProvider>
       <CategoriesProvider>
-        <AppContent />
+        <HistoryProvider>
+          <AppContent />
+        </HistoryProvider>
       </CategoriesProvider>
     </TransactionProvider>
   );
