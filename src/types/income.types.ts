@@ -5,6 +5,7 @@ export interface IncomeEntry {
   vat: string; // "0" or "0.18"
   vatType: string; // "לפני/ללא מע"מ" or "כולל מע"מ"
   description?: string;
+  isRecurring?: boolean;
 }
 
 export interface IncomeFormData {
@@ -14,6 +15,7 @@ export interface IncomeFormData {
   vat: string;
   vatType: string;
   description: string;
+  isRecurring: boolean;
 }
 
 export interface IncomeSubmitResult {

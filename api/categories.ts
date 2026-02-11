@@ -46,6 +46,19 @@ export default async function handler(
       ? process.env.AIRTABLE_CATEGORY_STATUS_FIELD!
       : process.env.AIRTABLE_EXPENSE_CATEGORY_STATUS_FIELD!;
 
+    // Lookup field names based on type
+    let ownerField, domainField, businessHomeField, expenseTypeField, renewalDateField;
+
+    if (type === 'income') {
+      ownerField = process.env.AIRTABLE_CATEGORY_OWNER_FIELD;
+      domainField = process.env.AIRTABLE_CATEGORY_DOMAIN_FIELD;
+    } else {
+      businessHomeField = process.env.AIRTABLE_EXPENSE_BUSINESS_HOME_FIELD;
+      domainField = process.env.AIRTABLE_EXPENSE_DOMAIN_FIELD;
+      expenseTypeField = process.env.AIRTABLE_EXPENSE_TYPE_FIELD;
+      renewalDateField = process.env.AIRTABLE_EXPENSE_RENEWAL_DATE_FIELD;
+    }
+
     const table = base(tableName);
 
     // Fetch categories with status = "פעיל"
@@ -56,11 +69,37 @@ export default async function handler(
       })
       .all();
 
-    const categories: Category[] = records.map(record => ({
-      id: record.id,
-      name: record.get(nameField) as string,
-      active: true
-    }));
+    // Helper to normalize field values (handle both string and array from Airtable)
+    const normalizeField = (value: any): string | undefined => {
+      if (!value) return undefined;
+      if (Array.isArray(value)) return value.join(', ');
+      return String(value);
+    };
+
+    const categories: Category[] = records.map(record => {
+      const base = {
+        id: record.id,
+        name: record.get(nameField) as string,
+        active: true
+      };
+
+      // Add type-specific fields
+      if (type === 'income') {
+        return {
+          ...base,
+          owner: normalizeField(ownerField ? record.get(ownerField) : undefined),
+          domain: normalizeField(domainField ? record.get(domainField) : undefined),
+        };
+      } else {
+        return {
+          ...base,
+          businessHome: normalizeField(businessHomeField ? record.get(businessHomeField) : undefined),
+          domain: normalizeField(domainField ? record.get(domainField) : undefined),
+          expenseType: normalizeField(expenseTypeField ? record.get(expenseTypeField) : undefined),
+          renewalDate: normalizeField(renewalDateField ? record.get(renewalDateField) : undefined),
+        };
+      }
+    });
 
     return res.status(200).json({ categories });
   } catch (error) {

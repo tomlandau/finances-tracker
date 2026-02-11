@@ -7,6 +7,7 @@ interface IncomeRequest {
   vat: string;
   vatType: string;
   description?: string;
+  isRecurring?: boolean;
 }
 
 export default async function handler(
@@ -19,7 +20,7 @@ export default async function handler(
   }
 
   try {
-    const { amount, categoryId, date, vat, vatType, description } = req.body as IncomeRequest;
+    const { amount, categoryId, date, vat, vatType, description, isRecurring } = req.body as IncomeRequest;
 
     // Validation
     if (!amount || amount <= 0) {
@@ -55,7 +56,8 @@ export default async function handler(
       [process.env.AIRTABLE_INCOME_AMOUNT_FIELD!]: amount,
       [process.env.AIRTABLE_INCOME_VAT_FIELD!]: vat,
       [process.env.AIRTABLE_INCOME_VAT_TYPE_FIELD!]: vatType,
-      ...(description && { [process.env.AIRTABLE_INCOME_DESCRIPTION_FIELD!]: description })
+      ...(description && { [process.env.AIRTABLE_INCOME_DESCRIPTION_FIELD!]: description }),
+      ...(isRecurring !== undefined && { [process.env.AIRTABLE_INCOME_RECURRING_FIELD!]: isRecurring })
     });
 
     return res.status(201).json({

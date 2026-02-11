@@ -5,6 +5,7 @@ export interface ExpenseEntry {
   vat: string;
   vatType: string;
   description?: string;
+  isRecurring?: boolean;
 }
 
 export interface ExpenseFormData {
@@ -14,6 +15,7 @@ export interface ExpenseFormData {
   vat: string;
   vatType: string;
   description: string;
+  isRecurring: boolean;
 }
 
 export interface ExpenseSubmitResult {

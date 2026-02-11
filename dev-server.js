@@ -38,6 +38,19 @@ const categoriesHandler = async (req, res) => {
       ? process.env.AIRTABLE_CATEGORY_STATUS_FIELD
       : process.env.AIRTABLE_EXPENSE_CATEGORY_STATUS_FIELD;
 
+    // Lookup field names based on type
+    let ownerField, domainField, businessHomeField, expenseTypeField, renewalDateField;
+
+    if (type === 'income') {
+      ownerField = process.env.AIRTABLE_CATEGORY_OWNER_FIELD;
+      domainField = process.env.AIRTABLE_CATEGORY_DOMAIN_FIELD;
+    } else {
+      businessHomeField = process.env.AIRTABLE_EXPENSE_BUSINESS_HOME_FIELD;
+      domainField = process.env.AIRTABLE_EXPENSE_DOMAIN_FIELD;
+      expenseTypeField = process.env.AIRTABLE_EXPENSE_TYPE_FIELD;
+      renewalDateField = process.env.AIRTABLE_EXPENSE_RENEWAL_DATE_FIELD;
+    }
+
     const Airtable = (await import('airtable')).default;
     const base = new Airtable({
       apiKey: process.env.AIRTABLE_API_KEY
@@ -55,11 +68,36 @@ const categoriesHandler = async (req, res) => {
 
     console.log('Records found:', records.length);
 
-    const categories = records.map(record => ({
-      id: record.id,
-      name: record.get(nameField),
-      active: true
-    }));
+    // Helper to normalize field values (handle both string and array)
+    const normalizeField = (value) => {
+      if (!value) return undefined;
+      if (Array.isArray(value)) return value.join(', ');
+      return value;
+    };
+
+    const categories = records.map(record => {
+      const base = {
+        id: record.id,
+        name: record.get(nameField),
+        active: true
+      };
+
+      if (type === 'income') {
+        return {
+          ...base,
+          owner: normalizeField(ownerField ? record.get(ownerField) : undefined),
+          domain: normalizeField(domainField ? record.get(domainField) : undefined),
+        };
+      } else {
+        return {
+          ...base,
+          businessHome: normalizeField(businessHomeField ? record.get(businessHomeField) : undefined),
+          domain: normalizeField(domainField ? record.get(domainField) : undefined),
+          expenseType: normalizeField(expenseTypeField ? record.get(expenseTypeField) : undefined),
+          renewalDate: normalizeField(renewalDateField ? record.get(renewalDateField) : undefined),
+        };
+      }
+    });
 
     return res.status(200).json({ categories });
   } catch (error) {
@@ -77,7 +115,7 @@ const incomeHandler = async (req, res) => {
   }
 
   try {
-    const { amount, categoryId, date, vat, vatType, description } = req.body;
+    const { amount, categoryId, date, vat, vatType, description, isRecurring } = req.body;
 
     console.log('=== Income Submission Debug ===');
     console.log('Request body:', req.body);
@@ -120,7 +158,8 @@ const incomeHandler = async (req, res) => {
       [process.env.AIRTABLE_INCOME_AMOUNT_FIELD]: amount,
       [process.env.AIRTABLE_INCOME_VAT_FIELD]: vat,
       [process.env.AIRTABLE_INCOME_VAT_TYPE_FIELD]: vatType,
-      ...(description && { [process.env.AIRTABLE_INCOME_DESCRIPTION_FIELD]: description })
+      ...(description && { [process.env.AIRTABLE_INCOME_DESCRIPTION_FIELD]: description }),
+      ...(isRecurring !== undefined && { [process.env.AIRTABLE_INCOME_RECURRING_FIELD]: isRecurring })
     };
 
     console.log('Creating record with data:', recordData);
@@ -147,7 +186,7 @@ const expenseHandler = async (req, res) => {
   }
 
   try {
-    const { amount, categoryId, date, vat, vatType, description } = req.body;
+    const { amount, categoryId, date, vat, vatType, description, isRecurring } = req.body;
 
     console.log('=== Expense Submission Debug ===');
     console.log('Request body:', req.body);
@@ -182,7 +221,8 @@ const expenseHandler = async (req, res) => {
       [process.env.AIRTABLE_EXPENSE_AMOUNT_FIELD]: amount,
       [process.env.AIRTABLE_EXPENSE_VAT_FIELD]: vat,
       [process.env.AIRTABLE_EXPENSE_VAT_TYPE_FIELD]: vatType,
-      ...(description && { [process.env.AIRTABLE_EXPENSE_DESCRIPTION_FIELD]: description })
+      ...(description && { [process.env.AIRTABLE_EXPENSE_DESCRIPTION_FIELD]: description }),
+      ...(isRecurring !== undefined && { [process.env.AIRTABLE_EXPENSE_RECURRING_FIELD]: isRecurring })
     };
 
     console.log('Creating expense record with data:', recordData);

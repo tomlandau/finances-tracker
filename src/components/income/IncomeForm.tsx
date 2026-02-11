@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Combobox } from '@/components/ui/Combobox';
+import { Checkbox } from '@/components/ui/Checkbox';
+import { CategoryDetails } from '@/components/ui/CategoryDetails';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { VatPreview } from './VatPreview';
-import type { IncomeFormData } from '@/types';
+import type { IncomeFormData, Category } from '@/types';
 import { VAT_OPTIONS, VAT_TYPE_OPTIONS, DEFAULT_VAT, DEFAULT_VAT_TYPE } from '@/utils/constants';
 
 const INITIAL_FORM_STATE: IncomeFormData = {
@@ -17,12 +19,14 @@ const INITIAL_FORM_STATE: IncomeFormData = {
   date: format(new Date(), 'yyyy-MM-dd'),
   vat: DEFAULT_VAT,
   vatType: DEFAULT_VAT_TYPE,
-  description: ''
+  description: '',
+  isRecurring: false
 };
 
 export function IncomeForm() {
   const [formData, setFormData] = useState<IncomeFormData>(INITIAL_FORM_STATE);
   const [categoryName, setCategoryName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<Category | undefined>(undefined);
   const [success, setSuccess] = useState(false);
 
   const { categories, loading: categoriesLoading } = useCategories();
@@ -47,12 +51,14 @@ export function IncomeForm() {
       date: formData.date,
       vat: formData.vat,
       vatType: formData.vatType,
-      description: formData.description || undefined
+      description: formData.description || undefined,
+      isRecurring: formData.isRecurring
     });
 
     if (success) {
       setFormData(INITIAL_FORM_STATE);
       setCategoryName('');
+      setSelectedCategory(undefined);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     }
@@ -89,12 +95,19 @@ export function IncomeForm() {
           const id = categoryMap.get(name);
           if (id) {
             setFormData(prev => ({ ...prev, categoryId: id }));
+            // Find and set the full category object
+            const cat = categories.find(c => c.id === id);
+            setSelectedCategory(cat);
+          } else {
+            setSelectedCategory(undefined);
           }
         }}
         options={categoryOptions}
         placeholder="הקלד או בחר מקור הכנסה..."
         required
       />
+
+      <CategoryDetails category={selectedCategory} type="income" />
 
       <Input
         type="number"
@@ -129,6 +142,12 @@ export function IncomeForm() {
         amount={formData.amount}
         vat={formData.vat}
         vatType={formData.vatType}
+      />
+
+      <Checkbox
+        label="יצירת הכנסה מחזורית"
+        checked={formData.isRecurring}
+        onChange={(e) => setFormData(prev => ({ ...prev, isRecurring: e.target.checked }))}
       />
 
       <Input
