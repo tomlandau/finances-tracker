@@ -65,6 +65,49 @@ AIRTABLE_BASE_ID=appXXXXXXXXXXXXXX
 # ... see .env.example for full list
 ```
 
+## 🚀 Deployment to Vercel
+
+### Prerequisites
+- GitHub account
+- Vercel account (sign up at [vercel.com](https://vercel.com))
+- Airtable credentials ready
+
+### Deploy Steps
+
+1. **Push to GitHub**
+   ```bash
+   git remote add origin <your-github-repo-url>
+   git push -u origin main
+   ```
+
+2. **Import to Vercel**
+   - Go to [vercel.com/new](https://vercel.com/new)
+   - Import your GitHub repository
+   - Vercel will auto-detect Vite configuration
+
+3. **Configure Environment Variables**
+   - In Vercel dashboard, go to Settings → Environment Variables
+   - Copy all variables from `.env.local`:
+     - `AIRTABLE_API_KEY`
+     - `AIRTABLE_BASE_ID`
+     - All table and field names
+   - Add them one by one
+   - Make sure to add them for **Production**, **Preview**, and **Development** environments
+
+4. **Deploy**
+   - Click "Deploy"
+   - Wait 1-2 minutes for build to complete
+   - Your app will be live at `https://your-project.vercel.app`
+
+5. **Test**
+   - Open the URL on your phone
+   - Test login and income entry
+   - Install as PWA (see below)
+
+### Automatic Deployments
+- Every push to `main` branch triggers a production deployment
+- Pull requests get preview deployments automatically
+
 ## 📱 PWA Installation
 
 ### iOS (Safari)
