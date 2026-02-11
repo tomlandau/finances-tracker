@@ -37,6 +37,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 - [📋 Full Specification](docs/SPECIFICATION.md) - אפיון מפורט
 - [📝 Implementation Plan](docs/PLAN.md) - תוכנית יישום
+- [📱 Mobile Guide](MOBILE.md) - מדריך התקנה ובדיקה על מובייל
 
 ## 🛠 Tech Stack
 
@@ -110,15 +111,21 @@ AIRTABLE_BASE_ID=appXXXXXXXXXXXXXX
 
 ## 📱 PWA Installation
 
+האפליקציה מותאמת למובייל וכוללת תמיכה מלאה ב-PWA!
+
 ### iOS (Safari)
-1. Open the app in Safari
-2. Tap Share button
-3. Tap "Add to Home Screen"
+1. פתח את האפליקציה ב-Safari
+2. לחץ על כפתור השיתוף (↑)
+3. בחר "Add to Home Screen"
+4. האפליקציה תופיע על המסך הראשי כאפליקציה רגילה
 
 ### Android (Chrome)
-1. Open the app in Chrome
-2. Tap the menu (⋮)
-3. Tap "Add to Home Screen"
+1. פתח את האפליקציה ב-Chrome
+2. לחץ על התפריט (⋮)
+3. בחר "Add to Home screen" או "Install app"
+4. האפליקציה תותקן כאפליקציה רגילה
+
+**📱 למדריך מפורט למובייל, ראה [MOBILE.md](MOBILE.md)**
 
 ## 🎯 MVP Scope
 
@@ -132,8 +139,9 @@ AIRTABLE_BASE_ID=appXXXXXXXXXXXXXX
 **Future Phases:**
 - 📝 Expense tracking
 - 📊 History & reports
-- 📴 Offline support
+- 📴 Enhanced offline support with sync
 - 🔒 Enhanced security (JWT)
+- 🖼️ PNG icons for better PWA experience
 
 ## 🐛 Known Limitations
 
@@ -156,8 +164,8 @@ ISC
 
 ---
 
-**Status:** ✅ MVP Complete
-**Version:** 1.0.0
-**Last Updated:** 2025-01-10
+**Status:** ✅ MVP Complete + Mobile Ready
+**Version:** 1.1.0
+**Last Updated:** 2026-02-11
 
 Built with ❤️ and Claude Code
