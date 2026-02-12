@@ -90,16 +90,18 @@ export function TransactionCard({ transaction, onTransactionChanged }: Transacti
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 text-sm text-gray-700 mb-2">
-        <div>
-          <span className="font-medium">סכום נטו:</span>{' '}
-          {transaction.netAmount ? formatAmount(transaction.netAmount) : '-'}
+      {isIncome && (
+        <div className="grid grid-cols-2 gap-2 text-sm text-gray-700 mb-2">
+          <div>
+            <span className="font-medium">סכום נטו:</span>{' '}
+            {transaction.netAmount ? formatAmount(transaction.netAmount) : '-'}
+          </div>
+          <div>
+            <span className="font-medium">מע"מ:</span>{' '}
+            {transaction.vatAmount ? formatAmount(transaction.vatAmount) : '-'}
+          </div>
         </div>
-        <div>
-          <span className="font-medium">מע"מ:</span>{' '}
-          {transaction.vatAmount ? formatAmount(transaction.vatAmount) : '-'}
-        </div>
-      </div>
+      )}
 
       {transaction.description && (
         <p className="text-sm text-gray-600 mb-2">

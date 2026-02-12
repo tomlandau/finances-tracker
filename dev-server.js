@@ -186,7 +186,7 @@ const expenseHandler = async (req, res) => {
   }
 
   try {
-    const { amount, categoryId, date, vat, vatType, description, isRecurring } = req.body;
+    const { amount, categoryId, date, description, isRecurring } = req.body;
 
     console.log('=== Expense Submission Debug ===');
     console.log('Request body:', req.body);
@@ -201,12 +201,6 @@ const expenseHandler = async (req, res) => {
     if (!date) {
       return res.status(400).json({ error: 'Date is required' });
     }
-    if (!vat) {
-      return res.status(400).json({ error: 'Invalid VAT rate' });
-    }
-    if (!vatType) {
-      return res.status(400).json({ error: 'Invalid VAT type' });
-    }
 
     const Airtable = (await import('airtable')).default;
     const base = new Airtable({
@@ -219,8 +213,6 @@ const expenseHandler = async (req, res) => {
       [process.env.AIRTABLE_EXPENSE_DATE_FIELD]: date,
       [process.env.AIRTABLE_EXPENSE_CATEGORY_FIELD]: [categoryId],
       [process.env.AIRTABLE_EXPENSE_AMOUNT_FIELD]: amount,
-      [process.env.AIRTABLE_EXPENSE_VAT_FIELD]: vat,
-      [process.env.AIRTABLE_EXPENSE_VAT_TYPE_FIELD]: vatType,
       ...(description && { [process.env.AIRTABLE_EXPENSE_DESCRIPTION_FIELD]: description }),
       ...(isRecurring !== undefined && { [process.env.AIRTABLE_EXPENSE_RECURRING_FIELD]: isRecurring })
     };
@@ -448,11 +440,14 @@ const updateHandler = async (req, res) => {
     if (fields.amount !== undefined) {
       updateFields[amountField] = fields.amount;
     }
-    if (fields.vat !== undefined) {
-      updateFields[vatField] = fields.vat;
-    }
-    if (fields.vatType !== undefined) {
-      updateFields[vatTypeField] = fields.vatType;
+    // VAT fields only for income
+    if (type === 'income') {
+      if (fields.vat !== undefined) {
+        updateFields[vatField] = fields.vat;
+      }
+      if (fields.vatType !== undefined) {
+        updateFields[vatTypeField] = fields.vatType;
+      }
     }
     if (fields.description !== undefined) {
       updateFields[descriptionField] = fields.description;

@@ -4,23 +4,18 @@ import { CategoriesContext } from '@/context/CategoriesContext';
 import { useExpenseSubmit } from '@/hooks/useExpenseSubmit';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { Combobox } from '@/components/ui/Combobox';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { CategoryDetails } from '@/components/ui/CategoryDetails';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { VatPreview } from '../income/VatPreview';
 import type { ExpenseFormData, Category } from '@/types';
 import type { Transaction } from '@/types/history.types';
 import type { OptimisticTransactionHandlers } from '@/components/transaction/TabView';
-import { VAT_OPTIONS, VAT_TYPE_OPTIONS, DEFAULT_VAT, DEFAULT_VAT_TYPE } from '@/utils/constants';
 
 const INITIAL_FORM_STATE: ExpenseFormData = {
   amount: '',
   categoryId: '',
   date: format(new Date(), 'yyyy-MM-dd'),
-  vat: DEFAULT_VAT,
-  vatType: DEFAULT_VAT_TYPE,
   description: '',
   isRecurring: false
 };
@@ -75,8 +70,6 @@ export function ExpenseForm({ filterBusinessHome, onSuccess, optimisticHandlers 
       amount,
       categoryId,
       categoryName,
-      vat: formData.vat,
-      vatType: formData.vatType,
       description: formData.description,
       isRecurring: formData.isRecurring,
       pending: true, // Mark as pending
@@ -92,8 +85,6 @@ export function ExpenseForm({ filterBusinessHome, onSuccess, optimisticHandlers 
       amount,
       categoryId,
       date: formData.date,
-      vat: formData.vat,
-      vatType: formData.vatType,
       description: formData.description || undefined,
       isRecurring: formData.isRecurring
     });
@@ -178,28 +169,6 @@ export function ExpenseForm({ filterBusinessHome, onSuccess, optimisticHandlers 
         required
         inputMode="decimal"
         autoFocus
-      />
-
-      <Select
-        label='מע"מ'
-        value={formData.vat}
-        onChange={(e) => setFormData(prev => ({ ...prev, vat: e.target.value }))}
-        options={VAT_OPTIONS}
-        required
-      />
-
-      <Select
-        label='הזנה עם או בלי מע"מ'
-        value={formData.vatType}
-        onChange={(e) => setFormData(prev => ({ ...prev, vatType: e.target.value }))}
-        options={VAT_TYPE_OPTIONS}
-        required
-      />
-
-      <VatPreview
-        amount={formData.amount}
-        vat={formData.vat}
-        vatType={formData.vatType}
       />
 
       <Checkbox

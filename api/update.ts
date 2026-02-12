@@ -42,14 +42,15 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    // Validate VAT if provided
-    if (fields.vat !== undefined && !['0', '0.18'].includes(fields.vat)) {
-      return res.status(400).json({ error: 'Invalid VAT rate' });
-    }
+    // Validate VAT if provided (only for income)
+    if (type === 'income') {
+      if (fields.vat !== undefined && !['0', '0.18'].includes(fields.vat)) {
+        return res.status(400).json({ error: 'Invalid VAT rate' });
+      }
 
-    // Validate VAT type if provided
-    if (fields.vatType !== undefined && !['לפני/ללא מע"מ', 'לא כולל מע"מ'].includes(fields.vatType)) {
-      return res.status(400).json({ error: 'Invalid VAT type' });
+      if (fields.vatType !== undefined && !['לפני/ללא מע"מ', 'לא כולל מע"מ'].includes(fields.vatType)) {
+        return res.status(400).json({ error: 'Invalid VAT type' });
+      }
     }
 
     // Import Airtable dynamically
@@ -107,11 +108,14 @@ export default async function handler(
     if (fields.amount !== undefined) {
       updateFields[amountField] = fields.amount;
     }
-    if (fields.vat !== undefined) {
-      updateFields[vatField] = fields.vat;
-    }
-    if (fields.vatType !== undefined) {
-      updateFields[vatTypeField] = fields.vatType;
+    // VAT fields only for income
+    if (type === 'income') {
+      if (fields.vat !== undefined) {
+        updateFields[vatField] = fields.vat;
+      }
+      if (fields.vatType !== undefined) {
+        updateFields[vatTypeField] = fields.vatType;
+      }
     }
     if (fields.description !== undefined) {
       updateFields[descriptionField] = fields.description;

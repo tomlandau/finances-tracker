@@ -73,8 +73,7 @@ export function EditTransactionModal({ transaction, onSuccess, onCancel }: EditT
         amount: parseFloat(formData.amount),
         categoryId: formData.categoryId,
         date: formData.date,
-        vat: formData.vat,
-        vatType: formData.vatType,
+        ...(isIncome && { vat: formData.vat, vatType: formData.vatType }),
         description: formData.description || undefined,
         isRecurring: formData.isRecurring,
       });
@@ -126,37 +125,41 @@ export function EditTransactionModal({ transaction, onSuccess, onCancel }: EditT
             inputMode="decimal"
           />
 
-          <Select
-            label='מע"מ'
-            value={formData.vat}
-            onChange={(e) => setFormData(prev => ({ ...prev, vat: e.target.value }))}
-            options={VAT_OPTIONS}
-            required
-          />
+          {isIncome && (
+            <>
+              <Select
+                label='מע"מ'
+                value={formData.vat}
+                onChange={(e) => setFormData(prev => ({ ...prev, vat: e.target.value }))}
+                options={VAT_OPTIONS}
+                required
+              />
 
-          <Select
-            label='הזנה עם או בלי מע"מ'
-            value={formData.vatType}
-            onChange={(e) => setFormData(prev => ({ ...prev, vatType: e.target.value }))}
-            options={VAT_TYPE_OPTIONS}
-            required
-          />
+              <Select
+                label='הזנה עם או בלי מע"מ'
+                value={formData.vatType}
+                onChange={(e) => setFormData(prev => ({ ...prev, vatType: e.target.value }))}
+                options={VAT_TYPE_OPTIONS}
+                required
+              />
 
-          {/* VAT Preview */}
-          <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm" dir="rtl">
-            <div className="flex justify-between">
-              <span className="font-medium">סכום נטו:</span>
-              <span>{vatPreview.net.toFixed(2)} ₪</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium">מע"מ:</span>
-              <span>{vatPreview.vat.toFixed(2)} ₪</span>
-            </div>
-            <div className="flex justify-between font-bold text-base border-t pt-2">
-              <span>סכום ברוטו:</span>
-              <span>{vatPreview.gross.toFixed(2)} ₪</span>
-            </div>
-          </div>
+              {/* VAT Preview */}
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm" dir="rtl">
+                <div className="flex justify-between">
+                  <span className="font-medium">סכום נטו:</span>
+                  <span>{vatPreview.net.toFixed(2)} ₪</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">מע"מ:</span>
+                  <span>{vatPreview.vat.toFixed(2)} ₪</span>
+                </div>
+                <div className="flex justify-between font-bold text-base border-t pt-2">
+                  <span>סכום ברוטו:</span>
+                  <span>{vatPreview.gross.toFixed(2)} ₪</span>
+                </div>
+              </div>
+            </>
+          )}
 
           <Checkbox
             label={isIncome ? 'יצירת הכנסה מחזורית' : 'יצירת הוצאה מחזורית'}

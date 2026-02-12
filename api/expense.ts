@@ -4,8 +4,6 @@ interface ExpenseRequest {
   amount: number;
   categoryId: string;
   date: string;
-  vat: string;
-  vatType: string;
   description?: string;
   isRecurring?: boolean;
 }
@@ -20,7 +18,7 @@ export default async function handler(
   }
 
   try {
-    const { amount, categoryId, date, vat, vatType, description, isRecurring } = req.body as ExpenseRequest;
+    const { amount, categoryId, date, description, isRecurring } = req.body as ExpenseRequest;
 
     // Validation
     if (!amount || amount <= 0) {
@@ -31,12 +29,6 @@ export default async function handler(
     }
     if (!date) {
       return res.status(400).json({ error: 'Date is required' });
-    }
-    if (!vat || !['0', '0.18'].includes(vat)) {
-      return res.status(400).json({ error: 'Invalid VAT rate' });
-    }
-    if (!vatType || !['לפני/ללא מע"מ', 'כולל מע"מ'].includes(vatType)) {
-      return res.status(400).json({ error: 'Invalid VAT type' });
     }
 
     // Import Airtable dynamically
@@ -49,13 +41,11 @@ export default async function handler(
 
     const table = base(process.env.AIRTABLE_EXPENSE_TABLE!);
 
-    // Create record - Airtable will calculate net/vat/gross amounts automatically
+    // Create record
     const record = await table.create({
       [process.env.AIRTABLE_EXPENSE_DATE_FIELD!]: date,
       [process.env.AIRTABLE_EXPENSE_CATEGORY_FIELD!]: [categoryId], // Linked record
       [process.env.AIRTABLE_EXPENSE_AMOUNT_FIELD!]: amount,
-      [process.env.AIRTABLE_EXPENSE_VAT_FIELD!]: vat,
-      [process.env.AIRTABLE_EXPENSE_VAT_TYPE_FIELD!]: vatType,
       ...(description && { [process.env.AIRTABLE_EXPENSE_DESCRIPTION_FIELD!]: description }),
       ...(isRecurring !== undefined && { [process.env.AIRTABLE_EXPENSE_RECURRING_FIELD!]: isRecurring })
     });
