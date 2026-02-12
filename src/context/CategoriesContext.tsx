@@ -49,6 +49,26 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     loadAll();
   }, [fetchIncome, fetchExpense]);
 
+  const getFilteredIncomeCategories = useCallback(
+    (owner?: string): Category[] => {
+      if (!owner) {
+        return incomeCategories;
+      }
+      return incomeCategories.filter((category) => category.owner === owner);
+    },
+    [incomeCategories]
+  );
+
+  const getFilteredExpenseCategories = useCallback(
+    (businessHome?: string): Category[] => {
+      if (!businessHome) {
+        return expenseCategories;
+      }
+      return expenseCategories.filter((category) => category.businessHome === businessHome);
+    },
+    [expenseCategories]
+  );
+
   return (
     <CategoriesContext.Provider
       value={{
@@ -58,6 +78,8 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
         error,
         refetchIncome: fetchIncome,
         refetchExpense: fetchExpense,
+        getFilteredIncomeCategories,
+        getFilteredExpenseCategories,
       }}
     >
       {children}

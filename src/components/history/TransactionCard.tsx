@@ -54,13 +54,22 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
 
   return (
     <div
-      className={`border-r-4 ${accentColor} ${bgColor} rounded-lg p-4 shadow-sm`}
+      className={`border-r-4 ${accentColor} ${bgColor} rounded-lg p-4 shadow-sm ${
+        transaction.pending ? 'opacity-60' : ''
+      }`}
       dir="rtl"
     >
       <div className="flex justify-between items-start mb-2">
-        <div>
-          <h3 className="font-semibold text-gray-900">{transaction.categoryName}</h3>
-          <p className="text-sm text-gray-600">{formatDate(transaction.date)}</p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h3 className="font-semibold text-gray-900">{transaction.categoryName}</h3>
+            <p className="text-sm text-gray-600">{formatDate(transaction.date)}</p>
+          </div>
+          {transaction.pending && (
+            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
+              ממתין...
+            </span>
+          )}
         </div>
         <div className="text-left">
           <p className={`text-xl font-bold ${textColor}`}>
@@ -95,20 +104,22 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
             מחזורי
           </span>
         )}
-        <div className="mr-auto flex gap-2">
-          <button
-            onClick={() => setShowEditModal(true)}
-            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-          >
-            ערוך
-          </button>
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-          >
-            מחק
-          </button>
-        </div>
+        {!transaction.pending && (
+          <div className="mr-auto flex gap-2">
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+            >
+              ערוך
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+            >
+              מחק
+            </button>
+          </div>
+        )}
       </div>
 
       {showEditModal && (

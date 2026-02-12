@@ -12,6 +12,7 @@ export interface Transaction {
   netAmount?: number;
   vatAmount?: number;
   grossAmount?: number;
+  pending?: boolean; // For optimistic UI updates
 }
 
 export interface HistoryFilters {

@@ -1,6 +1,6 @@
-import { useState, FormEvent, useMemo } from 'react';
+import { useState, FormEvent, useMemo, useContext } from 'react';
 import { format } from 'date-fns';
-import { useCategories } from '@/hooks/useCategories';
+import { CategoriesContext } from '@/context/CategoriesContext';
 import { useIncomeSubmit } from '@/hooks/useIncomeSubmit';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -11,6 +11,8 @@ import { CategoryDetails } from '@/components/ui/CategoryDetails';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { VatPreview } from './VatPreview';
 import type { IncomeFormData, Category } from '@/types';
+import type { Transaction } from '@/types/history.types';
+import type { OptimisticTransactionHandlers } from '@/components/transaction/TabView';
 import { VAT_OPTIONS, VAT_TYPE_OPTIONS, DEFAULT_VAT, DEFAULT_VAT_TYPE } from '@/utils/constants';
 
 const INITIAL_FORM_STATE: IncomeFormData = {
@@ -23,13 +25,29 @@ const INITIAL_FORM_STATE: IncomeFormData = {
   isRecurring: false
 };
 
-export function IncomeForm() {
+interface IncomeFormProps {
+  filterOwner?: string;
+  onSuccess?: () => void;
+  optimisticHandlers?: OptimisticTransactionHandlers | null;
+}
+
+export function IncomeForm({ filterOwner, onSuccess, optimisticHandlers }: IncomeFormProps = {}) {
   const [formData, setFormData] = useState<IncomeFormData>(INITIAL_FORM_STATE);
   const [categoryName, setCategoryName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>(undefined);
   const [success, setSuccess] = useState(false);
 
-  const { categories, loading: categoriesLoading } = useCategories();
+  const context = useContext(CategoriesContext);
+  if (!context) {
+    throw new Error('IncomeForm must be used within CategoriesProvider');
+  }
+
+  const { loading: categoriesLoading, getFilteredIncomeCategories } = context;
+  const categories = useMemo(
+    () => getFilteredIncomeCategories(filterOwner),
+    [getFilteredIncomeCategories, filterOwner]
+  );
+
   const { submit, loading: submitting, error } = useIncomeSubmit();
 
   // Create category name to ID map
@@ -44,10 +62,35 @@ export function IncomeForm() {
 
     // Get category ID from name
     const categoryId = categoryMap.get(categoryName) || formData.categoryId;
+    const amount = parseFloat(formData.amount);
 
+    // Generate temporary ID for optimistic transaction
+    const tempId = `temp-${Date.now()}-${Math.random()}`;
+
+    // Create optimistic transaction
+    const optimisticTransaction: Transaction = {
+      id: tempId,
+      type: 'income',
+      date: formData.date,
+      amount,
+      categoryId,
+      categoryName,
+      vat: formData.vat,
+      vatType: formData.vatType,
+      description: formData.description,
+      isRecurring: formData.isRecurring,
+      pending: true, // Mark as pending
+    };
+
+    // Add optimistic transaction to the list
+    if (optimisticHandlers) {
+      optimisticHandlers.addOptimisticTransaction(optimisticTransaction);
+    }
+
+    // Submit to API
     const success = await submit({
-      amount: parseFloat(formData.amount),
-      categoryId: categoryId,
+      amount,
+      categoryId,
       date: formData.date,
       vat: formData.vat,
       vatType: formData.vatType,
@@ -56,11 +99,26 @@ export function IncomeForm() {
     });
 
     if (success) {
+      // Remove optimistic transaction (real one will come from refresh)
+      if (optimisticHandlers) {
+        optimisticHandlers.removeOptimisticTransaction(tempId);
+      }
+
       setFormData(INITIAL_FORM_STATE);
       setCategoryName('');
       setSelectedCategory(undefined);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
+
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+    } else {
+      // Remove optimistic transaction on failure
+      if (optimisticHandlers) {
+        optimisticHandlers.removeOptimisticTransaction(tempId);
+      }
     }
   };
 

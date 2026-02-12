@@ -20,4 +20,6 @@ export interface CategoriesState {
   error: string | null;
   refetchIncome: () => Promise<void>;
   refetchExpense: () => Promise<void>;
+  getFilteredIncomeCategories: (owner?: string) => Category[];
+  getFilteredExpenseCategories: (businessHome?: string) => Category[];
 }

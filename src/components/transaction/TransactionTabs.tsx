@@ -1,32 +1,70 @@
-import { useTransactionType } from '@/hooks/useTransactionType';
-import type { TransactionType } from '@/types';
+import { useTab } from '@/hooks/useTab';
+import { TAB_CONFIGS } from '@/utils/tabConfigs';
 
 export function TransactionTabs() {
-  const { type, setType } = useTransactionType();
-
-  const tabs: Array<{ id: TransactionType; label: string }> = [
-    { id: 'income', label: 'הכנסות' },
-    { id: 'expense', label: 'הוצאות' },
-    { id: 'history', label: 'היסטוריה' }
-  ];
+  const { currentTab, setTab } = useTab();
 
   return (
-    <div className="flex gap-2 mb-6" role="tablist">
-      {tabs.map(tab => (
-        <button
-          key={tab.id}
-          role="tab"
-          aria-selected={type === tab.id}
-          onClick={() => setType(tab.id)}
-          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors
-            ${type === tab.id
-              ? 'bg-primary-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-        >
-          {tab.label}
-        </button>
-      ))}
+    <div className="mb-6">
+      {/* Desktop: Single row of tabs */}
+      <div className="hidden md:flex gap-2" role="tablist">
+        {TAB_CONFIGS.map((tab) => (
+          <button
+            key={tab.id}
+            role="tab"
+            aria-selected={currentTab === tab.id}
+            onClick={() => setTab(tab.id)}
+            className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm transition-colors
+              ${
+                currentTab === tab.id
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Mobile: Two rows of tabs (3 each) */}
+      <div className="md:hidden space-y-2" role="tablist">
+        <div className="grid grid-cols-3 gap-2">
+          {TAB_CONFIGS.slice(0, 3).map((tab) => (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={currentTab === tab.id}
+              onClick={() => setTab(tab.id)}
+              className={`px-2 py-2 rounded-lg font-medium text-xs transition-colors
+                ${
+                  currentTab === tab.id
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {TAB_CONFIGS.slice(3).map((tab) => (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={currentTab === tab.id}
+              onClick={() => setTab(tab.id)}
+              className={`px-2 py-2 rounded-lg font-medium text-xs transition-colors
+                ${
+                  currentTab === tab.id
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
