@@ -22,4 +22,5 @@ export interface CategoriesState {
   refetchExpense: () => Promise<void>;
   getFilteredIncomeCategories: (owner?: string) => Category[];
   getFilteredExpenseCategories: (businessHome?: string) => Category[];
+  getCategoryById: (id: string) => Category | undefined;
 }

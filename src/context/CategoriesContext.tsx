@@ -69,6 +69,13 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     [expenseCategories]
   );
 
+  const getCategoryById = useCallback(
+    (id: string): Category | undefined => {
+      return incomeCategories.find(c => c.id === id) || expenseCategories.find(c => c.id === id);
+    },
+    [incomeCategories, expenseCategories]
+  );
+
   return (
     <CategoriesContext.Provider
       value={{
@@ -80,6 +87,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
         refetchExpense: fetchExpense,
         getFilteredIncomeCategories,
         getFilteredExpenseCategories,
+        getCategoryById,
       }}
     >
       {children}

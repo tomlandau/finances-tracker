@@ -5,6 +5,7 @@ import { LoginForm } from '@/components/auth/LoginForm';
 import { Layout } from '@/components/layout/Layout';
 import { TransactionTabs } from '@/components/transaction/TransactionTabs';
 import { TabView, type OptimisticTransactionHandlers } from '@/components/transaction/TabView';
+import { MonthSelector } from '@/components/transaction/MonthSelector';
 import { FAB } from '@/components/ui/FAB';
 import { AddTransactionModal } from '@/components/transaction/AddTransactionModal';
 import { CategoriesProvider } from '@/context/CategoriesContext';
@@ -12,10 +13,18 @@ import { TabProvider } from '@/context/TabContext';
 import { HistoryProvider } from '@/context/HistoryContext';
 import { TAB_CONFIGS } from '@/utils/tabConfigs';
 
+function getCurrentMonth(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
 function AppContent() {
   const { currentTab } = useTab();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const optimisticHandlersRef = useRef<OptimisticTransactionHandlers | null>(null);
 
   // Find the current tab config
@@ -42,9 +51,13 @@ function AppContent() {
     <>
       <Layout>
         <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="mb-4">
+            <MonthSelector selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
+          </div>
           <TransactionTabs />
           <TabView
             tab={tabConfig}
+            selectedMonth={selectedMonth}
             key={`${tabConfig.id}-${refreshTrigger}`}
             onOptimisticHandlersReady={(handlers) => {
               optimisticHandlersRef.current = handlers;

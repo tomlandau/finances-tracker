@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import type { Transaction } from '@/types/history.types';
 import { useHistory } from '@/hooks/useHistory';
+import { CategoriesContext } from '@/context/CategoriesContext';
 import { DeleteConfirmation } from './DeleteConfirmation';
 import { EditTransactionModal } from './EditTransactionModal';
 
@@ -11,9 +12,13 @@ interface TransactionCardProps {
 
 export function TransactionCard({ transaction, onTransactionChanged }: TransactionCardProps) {
   const { deleteTransaction, refresh } = useHistory();
+  const categoriesContext = useContext(CategoriesContext);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Get full category details
+  const category = categoriesContext?.getCategoryById(transaction.categoryId);
 
   const isIncome = transaction.type === 'income';
   const accentColor = isIncome ? 'border-green-500' : 'border-red-500';
@@ -71,7 +76,19 @@ export function TransactionCard({ transaction, onTransactionChanged }: Transacti
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2">
           <div>
-            <h3 className="font-semibold text-gray-900">{transaction.categoryName}</h3>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-gray-900">{transaction.categoryName}</h3>
+              {category && isIncome && category.domain && (
+                <span className="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">
+                  {category.domain}
+                </span>
+              )}
+              {category && !isIncome && category.expenseType && (
+                <span className="inline-block px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded">
+                  {category.expenseType}
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-600">{formatDate(transaction.date)}</p>
           </div>
           {transaction.pending && (

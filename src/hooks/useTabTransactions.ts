@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useContext } from 'react';
 import type { TabConfig } from '@/types/tab.types';
 import type { Transaction } from '@/types/history.types';
+import type { TabFilters } from '@/types/filter.types';
 import { api } from '@/services/api';
 import { CategoriesContext } from '@/context/CategoriesContext';
 
-export function useTabTransactions(tab: TabConfig, selectedMonth: string) {
+export function useTabTransactions(tab: TabConfig, selectedMonth: string, filters?: TabFilters) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [optimisticTransactions, setOptimisticTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,8 +39,16 @@ export function useTabTransactions(tab: TabConfig, selectedMonth: string) {
     return new Set(filteredCategories.map((cat) => cat.id));
   }, [filteredCategories]);
 
-  // Derive start and end dates from selectedMonth
+  // Derive start and end dates from selectedMonth or filters.dateRange
   const [startDate, endDate] = useMemo(() => {
+    // Use custom date range if provided, otherwise use selectedMonth
+    if (filters?.dateRange?.start || filters?.dateRange?.end) {
+      return [
+        filters.dateRange.start || '',
+        filters.dateRange.end || ''
+      ];
+    }
+
     const [year, month] = selectedMonth.split('-').map(Number);
     const start = new Date(year, month - 1, 1);
     const end = new Date(year, month, 0); // Last day of month
@@ -48,7 +57,7 @@ export function useTabTransactions(tab: TabConfig, selectedMonth: string) {
     const endStr = end.toISOString().split('T')[0];
 
     return [startStr, endStr];
-  }, [selectedMonth]);
+  }, [selectedMonth, filters?.dateRange]);
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
@@ -59,12 +68,26 @@ export function useTabTransactions(tab: TabConfig, selectedMonth: string) {
           type: tab.transactionType,
           startDate,
           endDate,
+          ...(filters?.categoryId && { categoryId: filters.categoryId }),
         },
         1000 // High limit to get all transactions for the month
       );
 
-      // Filter by category IDs
-      const filtered = data.filter((transaction) => categoryIds.has(transaction.categoryId));
+      // Filter by category IDs (tab-level filtering)
+      let filtered = data.filter((transaction) => categoryIds.has(transaction.categoryId));
+
+      // Apply additional client-side filters
+      if (filters?.expenseType && tab.transactionType === 'expense') {
+        filtered = filtered.filter(t => {
+          const category = categories.find(c => c.id === t.categoryId);
+          return category?.expenseType === filters.expenseType;
+        });
+      }
+
+      // Filter by recurring only
+      if (filters?.recurringOnly) {
+        filtered = filtered.filter(t => t.isRecurring === true);
+      }
 
       setTransactions(filtered);
     } catch (err) {
@@ -74,7 +97,7 @@ export function useTabTransactions(tab: TabConfig, selectedMonth: string) {
     } finally {
       setLoading(false);
     }
-  }, [tab.transactionType, startDate, endDate, categoryIds]);
+  }, [tab.transactionType, startDate, endDate, categoryIds, filters, categories]);
 
   // Fetch transactions when dependencies change
   useEffect(() => {
