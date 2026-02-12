@@ -22,8 +22,8 @@ export function EditTransactionModal({ transaction, onSuccess, onCancel }: EditT
     amount: transaction.amount.toString(),
     categoryId: transaction.categoryId,
     date: transaction.date,
-    vat: transaction.vat,
-    vatType: transaction.vatType,
+    vat: transaction.vat || '0',
+    vatType: transaction.vatType || 'לפני/ללא מע"מ',
     description: transaction.description || '',
     isRecurring: transaction.isRecurring || false,
   });

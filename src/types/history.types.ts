@@ -5,8 +5,8 @@ export interface Transaction {
   amount: number;
   categoryId: string;
   categoryName: string;
-  vat: string;
-  vatType: string;
+  vat?: string; // Optional - only for income
+  vatType?: string; // Optional - only for income
   description?: string;
   isRecurring?: boolean;
   netAmount?: number;
