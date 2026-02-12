@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTab } from '@/hooks/useTab';
 import { LoginForm } from '@/components/auth/LoginForm';
@@ -6,12 +6,14 @@ import { Layout } from '@/components/layout/Layout';
 import { TransactionTabs } from '@/components/transaction/TransactionTabs';
 import { TabView, type OptimisticTransactionHandlers } from '@/components/transaction/TabView';
 import { MonthSelector } from '@/components/transaction/MonthSelector';
+import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { FAB } from '@/components/ui/FAB';
 import { AddTransactionModal } from '@/components/transaction/AddTransactionModal';
 import { CategoriesProvider } from '@/context/CategoriesContext';
 import { TabProvider } from '@/context/TabContext';
 import { HistoryProvider } from '@/context/HistoryContext';
 import { TAB_CONFIGS } from '@/utils/tabConfigs';
+import { syncManager } from '@/services/syncManager';
 
 function getCurrentMonth(): string {
   const now = new Date();
@@ -43,12 +45,26 @@ function AppContent() {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  // Set up sync on reconnect
+  useEffect(() => {
+    const handleOnline = async () => {
+      console.log('Back online, syncing pending submissions...');
+      await syncManager.syncOnline();
+      // Refresh UI after sync
+      setRefreshTrigger((prev) => prev + 1);
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
   if (!tabConfig) {
     return null; // Should never happen
   }
 
   return (
     <>
+      <OfflineIndicator />
       <Layout>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="mb-4">

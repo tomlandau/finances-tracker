@@ -33,7 +33,31 @@ export default defineConfig({
         ]
       },
       workbox: {
-        runtimeCaching: [],
+        runtimeCaching: [
+          {
+            urlPattern: /^\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 5 * 60 // 5 minutes
+              },
+              networkTimeoutSeconds: 10
+            }
+          },
+          {
+            urlPattern: /\.(js|css|woff2?)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'static-resources',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+              }
+            }
+          }
+        ],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true

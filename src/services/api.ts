@@ -1,5 +1,6 @@
 import type { Category, IncomeEntry, ExpenseEntry, CategoryType } from '@/types';
 import type { Transaction, HistoryFilters } from '@/types/history.types';
+import { db } from './db';
 
 const API_BASE = '/api';
 
@@ -17,37 +18,67 @@ export const api = {
   },
 
   async submitIncome(entry: IncomeEntry): Promise<{ success: boolean; id: string }> {
-    const response = await fetch(`${API_BASE}/income`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(entry),
-    });
+    try {
+      const response = await fetch(`${API_BASE}/income`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(entry),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to submit income');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to submit income');
+      }
+
+      return await response.json();
+    } catch (error) {
+      // If offline or network error, queue the submission
+      if (!navigator.onLine || error instanceof TypeError) {
+        await db.addPendingSubmission({
+          endpoint: `${API_BASE}/income`,
+          method: 'POST',
+          body: entry,
+          timestamp: Date.now(),
+        });
+        // Return optimistic response
+        return { success: true, id: 'offline-' + Date.now() };
+      }
+      throw error;
     }
-
-    return await response.json();
   },
 
   async submitExpense(entry: ExpenseEntry): Promise<{ success: boolean; id: string }> {
-    const response = await fetch(`${API_BASE}/expense`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(entry),
-    });
+    try {
+      const response = await fetch(`${API_BASE}/expense`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(entry),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to submit expense');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to submit expense');
+      }
+
+      return await response.json();
+    } catch (error) {
+      // If offline or network error, queue the submission
+      if (!navigator.onLine || error instanceof TypeError) {
+        await db.addPendingSubmission({
+          endpoint: `${API_BASE}/expense`,
+          method: 'POST',
+          body: entry,
+          timestamp: Date.now(),
+        });
+        // Return optimistic response
+        return { success: true, id: 'offline-' + Date.now() };
+      }
+      throw error;
     }
-
-    return await response.json();
   },
 
   async fetchRecent(filters: HistoryFilters, limit: number = 20): Promise<Transaction[]> {
@@ -89,36 +120,66 @@ export const api = {
       isRecurring?: boolean;
     }
   ): Promise<{ success: boolean; id: string }> {
-    const response = await fetch(`${API_BASE}/update`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id, type, fields }),
-    });
+    try {
+      const response = await fetch(`${API_BASE}/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, type, fields }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to update transaction');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update transaction');
+      }
+
+      return await response.json();
+    } catch (error) {
+      // If offline or network error, queue the submission
+      if (!navigator.onLine || error instanceof TypeError) {
+        await db.addPendingSubmission({
+          endpoint: `${API_BASE}/update`,
+          method: 'POST',
+          body: { id, type, fields },
+          timestamp: Date.now(),
+        });
+        // Return optimistic response
+        return { success: true, id };
+      }
+      throw error;
     }
-
-    return await response.json();
   },
 
   async deleteTransaction(id: string, type: 'income' | 'expense'): Promise<{ success: boolean; id: string }> {
-    const response = await fetch(`${API_BASE}/delete`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id, type }),
-    });
+    try {
+      const response = await fetch(`${API_BASE}/delete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, type }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to delete transaction');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete transaction');
+      }
+
+      return await response.json();
+    } catch (error) {
+      // If offline or network error, queue the submission
+      if (!navigator.onLine || error instanceof TypeError) {
+        await db.addPendingSubmission({
+          endpoint: `${API_BASE}/delete`,
+          method: 'POST',
+          body: { id, type },
+          timestamp: Date.now(),
+        });
+        // Return optimistic response
+        return { success: true, id };
+      }
+      throw error;
     }
-
-    return await response.json();
   },
 };
