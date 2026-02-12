@@ -6,9 +6,10 @@ import { EditTransactionModal } from './EditTransactionModal';
 
 interface TransactionCardProps {
   transaction: Transaction;
+  onTransactionChanged?: () => void;
 }
 
-export function TransactionCard({ transaction }: TransactionCardProps) {
+export function TransactionCard({ transaction, onTransactionChanged }: TransactionCardProps) {
   const { deleteTransaction, refresh } = useHistory();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -24,6 +25,10 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
     const success = await deleteTransaction(transaction.id, transaction.type);
     if (success) {
       setShowDeleteModal(false);
+      // Trigger refresh in parent
+      if (onTransactionChanged) {
+        onTransactionChanged();
+      }
     }
     setIsDeleting(false);
   };
@@ -31,6 +36,10 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
   const handleEditSuccess = async () => {
     setShowEditModal(false);
     await refresh();
+    // Trigger refresh in parent
+    if (onTransactionChanged) {
+      onTransactionChanged();
+    }
   };
 
   // Format date to display

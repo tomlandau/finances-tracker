@@ -16,6 +16,7 @@ export interface OptimisticTransactionHandlers {
 interface TabViewProps {
   tab: TabConfig;
   onOptimisticHandlersReady?: (handlers: OptimisticTransactionHandlers) => void;
+  onTransactionChanged?: () => void;
 }
 
 function getCurrentMonth(): string {
@@ -25,7 +26,7 @@ function getCurrentMonth(): string {
   return `${year}-${month}`;
 }
 
-export function TabView({ tab, onOptimisticHandlersReady }: TabViewProps) {
+export function TabView({ tab, onOptimisticHandlersReady, onTransactionChanged }: TabViewProps) {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
 
   const {
@@ -76,7 +77,7 @@ export function TabView({ tab, onOptimisticHandlersReady }: TabViewProps) {
           <p className="text-gray-500">אין תנועות לחודש זה</p>
         </div>
       ) : (
-        <TransactionList transactions={transactions} />
+        <TransactionList transactions={transactions} onTransactionChanged={onTransactionChanged} />
       )}
     </div>
   );

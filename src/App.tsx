@@ -29,6 +29,11 @@ function AppContent() {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const handleTransactionChanged = () => {
+    // Trigger refresh after edit/delete
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
   if (!tabConfig) {
     return null; // Should never happen
   }
@@ -44,6 +49,7 @@ function AppContent() {
             onOptimisticHandlersReady={(handlers) => {
               optimisticHandlersRef.current = handlers;
             }}
+            onTransactionChanged={handleTransactionChanged}
           />
         </div>
       </Layout>
