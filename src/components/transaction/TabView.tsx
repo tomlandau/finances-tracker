@@ -11,6 +11,7 @@ import { TransactionsByCategoryView } from './TransactionsByCategoryView';
 import { PlannedTransactionsDrawer } from './PlannedTransactionsDrawer';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
+import { SearchInput } from '@/components/ui/SearchInput';
 import { Filter } from 'lucide-react';
 
 type ViewMode = 'by-date' | 'by-category';
@@ -32,6 +33,7 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
   const [filters, setFilters] = useState<TabFilters>({});
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('by-date');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const categoriesContext = useContext(CategoriesContext);
   const incomeCategories = categoriesContext?.incomeCategories || [];
@@ -57,7 +59,7 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
   }, [tab, incomeCategories, expenseCategories]);
 
   const {
-    transactions,
+    transactions: rawTransactions,
     plannedTransactions,
     loading,
     error,
@@ -66,6 +68,32 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
     removeOptimisticTransaction,
     clearOptimisticTransactions
   } = useTabTransactions(tab, selectedMonth, filters);
+
+  // Filter transactions by search query
+  const transactions = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return rawTransactions;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+
+    return rawTransactions.filter(transaction => {
+      // Get full category details to access domain, owner, businessHome, expenseType
+      const category = categoriesContext?.getCategoryById(transaction.categoryId);
+
+      // Search in transaction fields
+      const matchesCategory = transaction.categoryName?.toLowerCase().includes(query);
+      const matchesDescription = transaction.description?.toLowerCase().includes(query);
+
+      // Search in category fields
+      const matchesDomain = category?.domain?.toLowerCase().includes(query);
+      const matchesOwner = category?.owner?.toLowerCase().includes(query);
+      const matchesBusinessHome = category?.businessHome?.toLowerCase().includes(query);
+      const matchesExpenseType = category?.expenseType?.toLowerCase().includes(query);
+
+      return matchesCategory || matchesDescription || matchesDomain || matchesOwner || matchesBusinessHome || matchesExpenseType;
+    });
+  }, [rawTransactions, searchQuery, categoriesContext]);
 
   // Calculate planned summary
   const plannedSummary = useMemo(() => {
@@ -145,6 +173,13 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
           לפי קטגוריה
         </button>
       </div>
+
+      {/* Search Input */}
+      <SearchInput
+        value={searchQuery}
+        onValueChange={setSearchQuery}
+        placeholder="חיפוש לפי שם, תיאור, תחום, קטגוריה..."
+      />
 
       {/* Filter Toggle Button */}
       <div className="flex justify-end" dir="rtl">
