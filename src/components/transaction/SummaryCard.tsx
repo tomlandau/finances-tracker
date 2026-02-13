@@ -24,18 +24,18 @@ export function SummaryCard({ total, count, type, plannedTotal = 0, plannedCount
               <p className="text-2xl font-bold">
                 ₪{grandTotal.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
-              <div className="mt-2 text-sm opacity-90 space-y-1">
-                <div className="flex justify-between gap-4">
-                  <span>{type === 'income' ? 'הכנסות עד כה:' : 'הוצאות עד כה:'}</span>
+              <div className="mt-2 text-sm opacity-90 space-y-1 text-right">
+                <div className="flex justify-between items-center gap-4">
                   <span className="font-medium">
                     ₪{currentTotal.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
+                  <span>{type === 'income' ? 'הכנסות עד כה:' : 'הוצאות עד כה:'}</span>
                 </div>
-                <div className="flex justify-between gap-4">
-                  <span>{type === 'income' ? 'הכנסות מתוכננות:' : 'הוצאות מתוכננות:'}</span>
+                <div className="flex justify-between items-center gap-4">
                   <span className="font-medium">
                     ₪{plannedTotal.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
+                  <span>{type === 'income' ? 'הכנסות מתוכננות:' : 'הוצאות מתוכננות:'}</span>
                 </div>
               </div>
             </>
