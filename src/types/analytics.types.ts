@@ -25,6 +25,26 @@ export interface CategorySummary {
   percentage: number;
 }
 
+export interface DomainBreakdown {
+  domain: string;
+  total: number;
+  percentage: number;
+}
+
+export interface BusinessHomeBreakdown {
+  businessHome: string;
+  total: number;
+  percentage: number;
+  domainBreakdown: DomainBreakdown[];
+}
+
+export interface OwnerBreakdown {
+  owner: string;
+  total: number;
+  percentage: number;
+  domainBreakdown: DomainBreakdown[];
+}
+
 export interface YearlyAnalytics {
   year: number;
   monthlySummaries: MonthlySummary[];
@@ -33,4 +53,7 @@ export interface YearlyAnalytics {
   totalBalance: number;
   topIncomeCategories: CategorySummary[];
   topExpenseCategories: CategorySummary[];
+  // New breakdowns
+  incomeByOwner: OwnerBreakdown[];
+  expenseByBusinessHome: BusinessHomeBreakdown[];
 }

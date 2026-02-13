@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { MonthlySummary } from './MonthlySummary';
 import { CategoryBreakdown } from './CategoryBreakdown';
+import { DomainAnalysis } from './DomainAnalysis';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { exportTransactionsToCSV } from '@/utils/exportCSV';
 import { Download } from 'lucide-react';
@@ -151,6 +152,12 @@ export function AnalyticsView() {
       <CategoryBreakdown
         incomeCategories={analytics.topIncomeCategories}
         expenseCategories={analytics.topExpenseCategories}
+      />
+
+      {/* Domain Analysis with Pie Charts */}
+      <DomainAnalysis
+        incomeByOwner={analytics.incomeByOwner}
+        expenseByBusinessHome={analytics.expenseByBusinessHome}
       />
     </div>
   );

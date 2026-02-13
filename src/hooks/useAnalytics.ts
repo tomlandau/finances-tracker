@@ -2,7 +2,15 @@ import { useState, useEffect, useMemo, useContext } from 'react';
 import { api } from '@/services/api';
 import { CategoriesContext } from '@/context/CategoriesContext';
 import type { Transaction } from '@/types/history.types';
-import type { MonthlySummary, CategorySummary, YearlyAnalytics, PeriodType, TabBreakdown } from '@/types/analytics.types';
+import type {
+  MonthlySummary,
+  CategorySummary,
+  YearlyAnalytics,
+  PeriodType,
+  TabBreakdown,
+  OwnerBreakdown,
+  BusinessHomeBreakdown
+} from '@/types/analytics.types';
 
 const HEBREW_MONTHS = [
   'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
@@ -218,6 +226,72 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
       .sort((a, b) => b.total - a.total)
       .slice(0, 10);
 
+    // Calculate income breakdown by owner and domain
+    const incomeByOwnerMap = new Map<string, { total: number; domainTotals: Map<string, number> }>();
+
+    incomeTransactions.forEach(t => {
+      const category = categoriesContext?.getCategoryById(t.categoryId);
+      const owner = category?.owner || 'אחר';
+      const domain = category?.domain || 'לא מוגדר';
+      const amount = t.grossAmount || t.amount;
+
+      if (!incomeByOwnerMap.has(owner)) {
+        incomeByOwnerMap.set(owner, { total: 0, domainTotals: new Map() });
+      }
+
+      const ownerData = incomeByOwnerMap.get(owner)!;
+      ownerData.total += amount;
+      ownerData.domainTotals.set(domain, (ownerData.domainTotals.get(domain) || 0) + amount);
+    });
+
+    const incomeByOwner: OwnerBreakdown[] = Array.from(incomeByOwnerMap.entries())
+      .map(([owner, data]) => ({
+        owner,
+        total: data.total,
+        percentage: totalIncome > 0 ? (data.total / totalIncome) * 100 : 0,
+        domainBreakdown: Array.from(data.domainTotals.entries())
+          .map(([domain, total]) => ({
+            domain,
+            total,
+            percentage: data.total > 0 ? (total / data.total) * 100 : 0
+          }))
+          .sort((a, b) => b.total - a.total)
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    // Calculate expense breakdown by businessHome and domain
+    const expenseByBusinessHomeMap = new Map<string, { total: number; domainTotals: Map<string, number> }>();
+
+    expenseTransactions.forEach(t => {
+      const category = categoriesContext?.getCategoryById(t.categoryId);
+      const businessHome = category?.businessHome || 'לא מוגדר';
+      const domain = category?.domain || 'לא מוגדר';
+      const amount = t.amount;
+
+      if (!expenseByBusinessHomeMap.has(businessHome)) {
+        expenseByBusinessHomeMap.set(businessHome, { total: 0, domainTotals: new Map() });
+      }
+
+      const bhData = expenseByBusinessHomeMap.get(businessHome)!;
+      bhData.total += amount;
+      bhData.domainTotals.set(domain, (bhData.domainTotals.get(domain) || 0) + amount);
+    });
+
+    const expenseByBusinessHome: BusinessHomeBreakdown[] = Array.from(expenseByBusinessHomeMap.entries())
+      .map(([businessHome, data]) => ({
+        businessHome,
+        total: data.total,
+        percentage: totalExpense > 0 ? (data.total / totalExpense) * 100 : 0,
+        domainBreakdown: Array.from(data.domainTotals.entries())
+          .map(([domain, total]) => ({
+            domain,
+            total,
+            percentage: data.total > 0 ? (total / data.total) * 100 : 0
+          }))
+          .sort((a, b) => b.total - a.total)
+      }))
+      .sort((a, b) => b.total - a.total);
+
     return {
       year,
       monthlySummaries,
@@ -225,7 +299,9 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
       totalExpense,
       totalBalance: totalIncome - totalExpense,
       topIncomeCategories,
-      topExpenseCategories
+      topExpenseCategories,
+      incomeByOwner,
+      expenseByBusinessHome
     };
   }, [year, periodType, incomeTransactions, expenseTransactions, categoriesContext]);
 
