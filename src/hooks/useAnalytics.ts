@@ -17,7 +17,11 @@ const HEBREW_MONTHS = [
   'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'
 ];
 
-export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
+export function useAnalytics(
+  year: number,
+  periodType: PeriodType = 'monthly',
+  selectedPeriods: number[] = [] // Array of period indices (0-11 for monthly, 0-5 for bi-monthly)
+) {
   const categoriesContext = useContext(CategoriesContext);
   const [incomeTransactions, setIncomeTransactions] = useState<Transaction[]>([]);
   const [expenseTransactions, setExpenseTransactions] = useState<Transaction[]>([]);
@@ -51,6 +55,40 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
   }, [year]);
 
   const analytics: YearlyAnalytics = useMemo(() => {
+    // Filter transactions by selected periods if any are selected
+    let filteredIncomeTransactions = incomeTransactions;
+    let filteredExpenseTransactions = expenseTransactions;
+
+    if (selectedPeriods.length > 0) {
+      if (periodType === 'monthly') {
+        // Filter by selected months (0-11)
+        filteredIncomeTransactions = incomeTransactions.filter(t => {
+          const txMonth = parseInt(t.date.split('-')[1]) - 1; // Convert to 0-based index
+          return selectedPeriods.includes(txMonth);
+        });
+        filteredExpenseTransactions = expenseTransactions.filter(t => {
+          const txMonth = parseInt(t.date.split('-')[1]) - 1;
+          return selectedPeriods.includes(txMonth);
+        });
+      } else {
+        // Filter by selected bi-monthly periods (0-5)
+        const selectedMonths = new Set<number>();
+        selectedPeriods.forEach(periodIndex => {
+          // Each bi-monthly period contains 2 months
+          selectedMonths.add(periodIndex * 2 + 1);
+          selectedMonths.add(periodIndex * 2 + 2);
+        });
+        filteredIncomeTransactions = incomeTransactions.filter(t => {
+          const txMonth = parseInt(t.date.split('-')[1]);
+          return selectedMonths.has(txMonth);
+        });
+        filteredExpenseTransactions = expenseTransactions.filter(t => {
+          const txMonth = parseInt(t.date.split('-')[1]);
+          return selectedMonths.has(txMonth);
+        });
+      }
+    }
+
     // Helper to categorize transaction by tab
     const categorizeTransaction = (transaction: Transaction): Partial<TabBreakdown> => {
       const category = categoriesContext?.getCategoryById(transaction.categoryId);
@@ -62,10 +100,21 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
         if (category?.owner === 'תום') return { tomIncome: amount };
         if (category?.owner === 'יעל') return { yaelIncome: amount };
       } else {
-        if (category?.businessHome === 'עסק תום') return { tomBusiness: amount };
-        if (category?.businessHome === 'עסק יעל') return { yaelBusiness: amount };
-        if (category?.businessHome === 'עסק - משותף') return { sharedBusiness: amount };
-        if (category?.businessHome === 'בית') return { home: amount };
+        const businessHome = category?.businessHome;
+        // Log uncategorized expenses for debugging
+        if (!businessHome) {
+          console.warn('Expense transaction without businessHome:', {
+            id: transaction.id,
+            date: transaction.date,
+            categoryId: transaction.categoryId,
+            categoryName: transaction.categoryName,
+            amount
+          });
+        }
+        if (businessHome === 'עסק תום') return { tomBusiness: amount };
+        if (businessHome === 'עסק יעל') return { yaelBusiness: amount };
+        if (businessHome === 'עסק - משותף') return { sharedBusiness: amount };
+        if (businessHome === 'בית') return { home: amount };
       }
       return {};
     };
@@ -97,13 +146,27 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
     // Calculate summaries based on period type
     const monthlySummaries: MonthlySummary[] = [];
 
+    // Determine which periods to show
+    const periodsToShow = selectedPeriods.length > 0
+      ? selectedPeriods
+      : (periodType === 'monthly' ? Array.from({ length: 12 }, (_, i) => i) : Array.from({ length: 6 }, (_, i) => i));
+
     if (periodType === 'monthly') {
-      for (let month = 1; month <= 12; month++) {
+      periodsToShow.forEach(monthIndex => {
+        const month = monthIndex + 1; // Convert from 0-based to 1-based
         const monthStr = month.toString().padStart(2, '0');
         const monthKey = `${year}-${monthStr}`;
 
         const monthIncomeTransactions = incomeTransactions.filter(t => t.date.startsWith(monthKey));
         const monthExpenseTransactions = expenseTransactions.filter(t => t.date.startsWith(monthKey));
+
+        // Debug logging for January (month 1)
+        if (month === 1) {
+          console.log('January expenses count:', monthExpenseTransactions.length);
+          console.log('January expenses:', monthExpenseTransactions);
+          const categorized = monthExpenseTransactions.map(categorizeTransaction);
+          console.log('January categorized:', categorized);
+        }
 
         const tabBreakdown = sumTabBreakdowns([
           ...monthIncomeTransactions.map(categorizeTransaction),
@@ -122,7 +185,7 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
           balance: monthIncome - monthExpense,
           tabBreakdown
         });
-      }
+      });
     } else {
       // Bi-monthly periods
       const biMonthlyPeriods = [
@@ -134,7 +197,8 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
         { months: [11, 12], name: 'נובמבר-דצמבר' }
       ];
 
-      for (const period of biMonthlyPeriods) {
+      periodsToShow.forEach(periodIndex => {
+        const period = biMonthlyPeriods[periodIndex];
         const [month1, month2] = period.months;
         const monthKey = `${year}-${month1.toString().padStart(2, '0')}-${month2.toString().padStart(2, '0')}`;
 
@@ -165,22 +229,22 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
           balance: periodIncome - periodExpense,
           tabBreakdown
         });
-      }
+      });
     }
 
-    // Calculate total income
-    const totalIncome = incomeTransactions.reduce(
+    // Calculate total income (use filtered transactions)
+    const totalIncome = filteredIncomeTransactions.reduce(
       (sum, t) => sum + (t.grossAmount || t.amount), 0
     );
 
-    // Calculate total expense
-    const totalExpense = expenseTransactions.reduce(
+    // Calculate total expense (use filtered transactions)
+    const totalExpense = filteredExpenseTransactions.reduce(
       (sum, t) => sum + t.amount, 0
     );
 
-    // Calculate top income categories
+    // Calculate top income categories (use filtered transactions)
     const incomeCategoryTotals = new Map<string, { name: string; total: number }>();
-    incomeTransactions.forEach(t => {
+    filteredIncomeTransactions.forEach(t => {
       const existing = incomeCategoryTotals.get(t.categoryId);
       if (existing) {
         existing.total += t.grossAmount || t.amount;
@@ -202,9 +266,9 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
       .sort((a, b) => b.total - a.total)
       .slice(0, 10);
 
-    // Calculate top expense categories
+    // Calculate top expense categories (use filtered transactions)
     const expenseCategoryTotals = new Map<string, { name: string; total: number }>();
-    expenseTransactions.forEach(t => {
+    filteredExpenseTransactions.forEach(t => {
       const existing = expenseCategoryTotals.get(t.categoryId);
       if (existing) {
         existing.total += t.amount;
@@ -226,10 +290,10 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
       .sort((a, b) => b.total - a.total)
       .slice(0, 10);
 
-    // Calculate income breakdown by owner and domain
+    // Calculate income breakdown by owner and domain (use filtered transactions)
     const incomeByOwnerMap = new Map<string, { total: number; domainTotals: Map<string, number> }>();
 
-    incomeTransactions.forEach(t => {
+    filteredIncomeTransactions.forEach(t => {
       const category = categoriesContext?.getCategoryById(t.categoryId);
       const owner = category?.owner || 'אחר';
       const domain = category?.domain || 'לא מוגדר';
@@ -259,10 +323,10 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Calculate expense breakdown by businessHome and domain
+    // Calculate expense breakdown by businessHome and domain (use filtered transactions)
     const expenseByBusinessHomeMap = new Map<string, { total: number; domainTotals: Map<string, number> }>();
 
-    expenseTransactions.forEach(t => {
+    filteredExpenseTransactions.forEach(t => {
       const category = categoriesContext?.getCategoryById(t.categoryId);
       const businessHome = category?.businessHome || 'לא מוגדר';
       const domain = category?.domain || 'לא מוגדר';
@@ -303,7 +367,7 @@ export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
       incomeByOwner,
       expenseByBusinessHome
     };
-  }, [year, periodType, incomeTransactions, expenseTransactions, categoriesContext]);
+  }, [year, periodType, selectedPeriods, incomeTransactions, expenseTransactions, categoriesContext]);
 
   const allTransactions = useMemo(
     () => [...incomeTransactions, ...expenseTransactions].sort((a, b) =>
