@@ -12,7 +12,7 @@ import { PlannedTransactionsDrawer } from './PlannedTransactionsDrawer';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
 import { SearchInput } from '@/components/ui/SearchInput';
-import { Filter } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 
 type ViewMode = 'by-date' | 'by-category';
 
@@ -32,6 +32,7 @@ interface TabViewProps {
 export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTransactionChanged }: TabViewProps) {
   const [filters, setFilters] = useState<TabFilters>({});
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+  const [searchPanelOpen, setSearchPanelOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('by-date');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -150,8 +151,44 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
         plannedCount={plannedSummary.count}
       />
 
-      {/* View Mode Toggle */}
-      <div className="flex gap-2" dir="rtl">
+      {/* View Mode Toggle + Action Buttons */}
+      <div className="flex gap-2 items-center" dir="rtl">
+        {/* Search and Filter buttons - Right side */}
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setSearchPanelOpen(!searchPanelOpen)}
+          className="w-auto px-3 py-2"
+        >
+          <span className="flex items-center gap-2">
+            <Search size={18} />
+            {searchQuery && (
+              <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-green-600 rounded-full">
+                {transactions.length}
+              </span>
+            )}
+          </span>
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setFilterPanelOpen(!filterPanelOpen)}
+          className="w-auto px-3 py-2"
+        >
+          <span className="flex items-center gap-2">
+            <Filter size={18} />
+            {activeFilterCount > 0 && (
+              <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+          </span>
+        </Button>
+
+        {/* Spacer */}
+        <div className="flex-1"></div>
+
+        {/* View mode buttons - Left side */}
         <button
           onClick={() => setViewMode('by-date')}
           className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm transition-colors ${
@@ -174,31 +211,14 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
         </button>
       </div>
 
-      {/* Search Input */}
-      <SearchInput
-        value={searchQuery}
-        onValueChange={setSearchQuery}
-        placeholder="חיפוש לפי שם, תיאור, תחום, קטגוריה..."
-      />
-
-      {/* Filter Toggle Button */}
-      <div className="flex justify-end" dir="rtl">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => setFilterPanelOpen(!filterPanelOpen)}
-          className="w-auto px-3 py-2"
-        >
-          <span className="flex items-center gap-2">
-            <Filter size={18} />
-            {activeFilterCount > 0 && (
-              <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full">
-                {activeFilterCount}
-              </span>
-            )}
-          </span>
-        </Button>
-      </div>
+      {/* Collapsible Search Panel */}
+      {searchPanelOpen && (
+        <SearchInput
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+          placeholder="חיפוש לפי שם, תיאור, תחום, קטגוריה..."
+        />
+      )}
 
       {/* Filter Panel */}
       <FilterPanel
