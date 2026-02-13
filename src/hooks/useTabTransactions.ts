@@ -40,23 +40,28 @@ export function useTabTransactions(tab: TabConfig, selectedMonth: string, filter
   }, [filteredCategories]);
 
   // Derive start and end dates from selectedMonth or filters.dateRange
-  const [startDate, endDate] = useMemo(() => {
+  const [startDate, endDate, monthEndDate] = useMemo(() => {
     // Use custom date range if provided, otherwise use selectedMonth
     if (filters?.dateRange?.start || filters?.dateRange?.end) {
       return [
         filters.dateRange.start || '',
+        filters.dateRange.end || '',
         filters.dateRange.end || ''
       ];
     }
 
     const [year, month] = selectedMonth.split('-').map(Number);
     const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 0); // Last day of month
+    const monthEnd = new Date(year, month, 0); // Last day of selected month
+
+    // Extend end date to fetch future transactions (3 months ahead)
+    const extendedEnd = new Date(year, month + 2, 0);
 
     const startStr = start.toISOString().split('T')[0];
-    const endStr = end.toISOString().split('T')[0];
+    const monthEndStr = monthEnd.toISOString().split('T')[0];
+    const endStr = extendedEnd.toISOString().split('T')[0];
 
-    return [startStr, endStr];
+    return [startStr, endStr, monthEndStr];
   }, [selectedMonth, filters?.dateRange]);
 
   const fetchTransactions = useCallback(async () => {
@@ -104,11 +109,27 @@ export function useTabTransactions(tab: TabConfig, selectedMonth: string, filter
     fetchTransactions();
   }, [fetchTransactions]);
 
-  // Merge optimistic transactions with real ones
+  // Separate current and planned transactions
+  const [currentTransactions, plannedTransactions] = useMemo(() => {
+    const current: Transaction[] = [];
+    const planned: Transaction[] = [];
+
+    transactions.forEach(transaction => {
+      if (transaction.date > monthEndDate) {
+        planned.push(transaction);
+      } else {
+        current.push(transaction);
+      }
+    });
+
+    return [current, planned];
+  }, [transactions, monthEndDate]);
+
+  // Merge optimistic transactions with real ones (only for current)
   const allTransactions = useMemo(() => {
     // Optimistic transactions appear first
-    return [...optimisticTransactions, ...transactions];
-  }, [optimisticTransactions, transactions]);
+    return [...optimisticTransactions, ...currentTransactions];
+  }, [optimisticTransactions, currentTransactions]);
 
   // Calculate summary
   const summary = useMemo(() => {
@@ -136,6 +157,7 @@ export function useTabTransactions(tab: TabConfig, selectedMonth: string, filter
 
   return {
     transactions: allTransactions,
+    plannedTransactions,
     loading,
     error,
     refresh: fetchTransactions,

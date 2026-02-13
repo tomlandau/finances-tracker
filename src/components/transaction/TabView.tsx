@@ -7,6 +7,7 @@ import { CategoriesContext } from '@/context/CategoriesContext';
 import { SummaryCard } from './SummaryCard';
 import { FilterPanel } from './FilterPanel';
 import { TransactionList } from '@/components/history/TransactionList';
+import { PlannedTransactionsDrawer } from './PlannedTransactionsDrawer';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -53,6 +54,7 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
 
   const {
     transactions,
+    plannedTransactions,
     loading,
     error,
     summary,
@@ -135,6 +137,13 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
       ) : (
         <TransactionList transactions={transactions} onTransactionChanged={onTransactionChanged} />
       )}
+
+      {/* Planned Transactions Drawer */}
+      <PlannedTransactionsDrawer
+        transactions={plannedTransactions}
+        type={tab.transactionType}
+        onTransactionChanged={onTransactionChanged}
+      />
     </div>
   );
 }
