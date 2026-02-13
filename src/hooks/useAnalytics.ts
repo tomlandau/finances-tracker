@@ -135,8 +135,14 @@ export function useAnalytics(
     // Calculate summaries based on period type
     const monthlySummaries: MonthlySummary[] = [];
 
+    // Determine which periods to show
+    const periodsToShow = selectedPeriods.length > 0
+      ? selectedPeriods
+      : (periodType === 'monthly' ? Array.from({ length: 12 }, (_, i) => i) : Array.from({ length: 6 }, (_, i) => i));
+
     if (periodType === 'monthly') {
-      for (let month = 1; month <= 12; month++) {
+      periodsToShow.forEach(monthIndex => {
+        const month = monthIndex + 1; // Convert from 0-based to 1-based
         const monthStr = month.toString().padStart(2, '0');
         const monthKey = `${year}-${monthStr}`;
 
@@ -160,7 +166,7 @@ export function useAnalytics(
           balance: monthIncome - monthExpense,
           tabBreakdown
         });
-      }
+      });
     } else {
       // Bi-monthly periods
       const biMonthlyPeriods = [
@@ -172,7 +178,8 @@ export function useAnalytics(
         { months: [11, 12], name: 'נובמבר-דצמבר' }
       ];
 
-      for (const period of biMonthlyPeriods) {
+      periodsToShow.forEach(periodIndex => {
+        const period = biMonthlyPeriods[periodIndex];
         const [month1, month2] = period.months;
         const monthKey = `${year}-${month1.toString().padStart(2, '0')}-${month2.toString().padStart(2, '0')}`;
 
@@ -203,7 +210,7 @@ export function useAnalytics(
           balance: periodIncome - periodExpense,
           tabBreakdown
         });
-      }
+      });
     }
 
     // Calculate total income (use filtered transactions)
