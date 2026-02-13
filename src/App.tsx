@@ -6,6 +6,7 @@ import { Layout } from '@/components/layout/Layout';
 import { TransactionTabs } from '@/components/transaction/TransactionTabs';
 import { TabView, type OptimisticTransactionHandlers } from '@/components/transaction/TabView';
 import { MonthSelector } from '@/components/transaction/MonthSelector';
+import { AnalyticsView } from '@/components/analytics/AnalyticsView';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { FAB } from '@/components/ui/FAB';
 import { AddTransactionModal } from '@/components/transaction/AddTransactionModal';
@@ -28,6 +29,9 @@ function AppContent() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const optimisticHandlersRef = useRef<OptimisticTransactionHandlers | null>(null);
+
+  // Check if current tab is analytics
+  const isAnalytics = currentTab === ('analytics' as any);
 
   // Find the current tab config
   const tabConfig = useMemo(
@@ -58,42 +62,48 @@ function AppContent() {
     return () => window.removeEventListener('online', handleOnline);
   }, []);
 
-  if (!tabConfig) {
-    return null; // Should never happen
-  }
-
   return (
     <>
       <OfflineIndicator />
       <Layout>
         <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="mb-4">
-            <MonthSelector selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
-          </div>
+          {!isAnalytics && (
+            <div className="mb-4">
+              <MonthSelector selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
+            </div>
+          )}
           <TransactionTabs />
-          <TabView
-            tab={tabConfig}
-            selectedMonth={selectedMonth}
-            key={`${tabConfig.id}-${refreshTrigger}`}
-            onOptimisticHandlersReady={(handlers) => {
-              optimisticHandlersRef.current = handlers;
-            }}
-            onTransactionChanged={handleTransactionChanged}
-          />
+
+          {/* Conditional rendering based on tab type */}
+          {isAnalytics ? (
+            <AnalyticsView />
+          ) : tabConfig ? (
+            <TabView
+              tab={tabConfig}
+              selectedMonth={selectedMonth}
+              key={`${tabConfig.id}-${refreshTrigger}`}
+              onOptimisticHandlersReady={(handlers) => {
+                optimisticHandlersRef.current = handlers;
+              }}
+              onTransactionChanged={handleTransactionChanged}
+            />
+          ) : null}
         </div>
       </Layout>
 
-      {/* FAB for adding transactions */}
-      <FAB onClick={() => setIsModalOpen(true)} />
+      {/* FAB for adding transactions - hide on analytics */}
+      {!isAnalytics && <FAB onClick={() => setIsModalOpen(true)} />}
 
       {/* Add transaction modal */}
-      <AddTransactionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        tab={tabConfig}
-        onSuccess={handleTransactionAdded}
-        optimisticHandlers={optimisticHandlersRef.current}
-      />
+      {!isAnalytics && tabConfig && (
+        <AddTransactionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          tab={tabConfig}
+          onSuccess={handleTransactionAdded}
+          optimisticHandlers={optimisticHandlersRef.current}
+        />
+      )}
     </>
   );
 }
