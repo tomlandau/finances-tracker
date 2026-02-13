@@ -1,14 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useContext } from 'react';
 import { api } from '@/services/api';
+import { CategoriesContext } from '@/context/CategoriesContext';
 import type { Transaction } from '@/types/history.types';
-import type { MonthlySummary, CategorySummary, YearlyAnalytics } from '@/types/analytics.types';
+import type { MonthlySummary, CategorySummary, YearlyAnalytics, PeriodType, TabBreakdown } from '@/types/analytics.types';
 
 const HEBREW_MONTHS = [
   'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
   'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'
 ];
 
-export function useAnalytics(year: number) {
+export function useAnalytics(year: number, periodType: PeriodType = 'monthly') {
+  const categoriesContext = useContext(CategoriesContext);
   const [incomeTransactions, setIncomeTransactions] = useState<Transaction[]>([]);
   const [expenseTransactions, setExpenseTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,28 +43,121 @@ export function useAnalytics(year: number) {
   }, [year]);
 
   const analytics: YearlyAnalytics = useMemo(() => {
-    // Calculate monthly summaries
+    // Helper to categorize transaction by tab
+    const categorizeTransaction = (transaction: Transaction): Partial<TabBreakdown> => {
+      const category = categoriesContext?.getCategoryById(transaction.categoryId);
+      const amount = transaction.type === 'income'
+        ? (transaction.grossAmount || transaction.amount)
+        : transaction.amount;
+
+      if (transaction.type === 'income') {
+        if (category?.owner === 'תום') return { tomIncome: amount };
+        if (category?.owner === 'יעל') return { yaelIncome: amount };
+      } else {
+        if (category?.businessHome === 'עסק תום') return { tomBusiness: amount };
+        if (category?.businessHome === 'עסק יעל') return { yaelBusiness: amount };
+        if (category?.businessHome === 'עסק - משותף') return { sharedBusiness: amount };
+        if (category?.businessHome === 'בית') return { home: amount };
+      }
+      return {};
+    };
+
+    // Helper to sum tab breakdowns
+    const sumTabBreakdowns = (breakdowns: Partial<TabBreakdown>[]): TabBreakdown => {
+      const initial: TabBreakdown = {
+        tomIncome: 0,
+        yaelIncome: 0,
+        tomBusiness: 0,
+        yaelBusiness: 0,
+        sharedBusiness: 0,
+        home: 0
+      };
+
+      return breakdowns.reduce<TabBreakdown>(
+        (acc, b) => ({
+          tomIncome: acc.tomIncome + (b.tomIncome || 0),
+          yaelIncome: acc.yaelIncome + (b.yaelIncome || 0),
+          tomBusiness: acc.tomBusiness + (b.tomBusiness || 0),
+          yaelBusiness: acc.yaelBusiness + (b.yaelBusiness || 0),
+          sharedBusiness: acc.sharedBusiness + (b.sharedBusiness || 0),
+          home: acc.home + (b.home || 0),
+        }),
+        initial
+      );
+    };
+
+    // Calculate summaries based on period type
     const monthlySummaries: MonthlySummary[] = [];
 
-    for (let month = 1; month <= 12; month++) {
-      const monthStr = month.toString().padStart(2, '0');
-      const monthKey = `${year}-${monthStr}`;
+    if (periodType === 'monthly') {
+      for (let month = 1; month <= 12; month++) {
+        const monthStr = month.toString().padStart(2, '0');
+        const monthKey = `${year}-${monthStr}`;
 
-      const monthIncome = incomeTransactions
-        .filter(t => t.date.startsWith(monthKey))
-        .reduce((sum, t) => sum + (t.grossAmount || t.amount), 0);
+        const monthIncomeTransactions = incomeTransactions.filter(t => t.date.startsWith(monthKey));
+        const monthExpenseTransactions = expenseTransactions.filter(t => t.date.startsWith(monthKey));
 
-      const monthExpense = expenseTransactions
-        .filter(t => t.date.startsWith(monthKey))
-        .reduce((sum, t) => sum + t.amount, 0);
+        const tabBreakdown = sumTabBreakdowns([
+          ...monthIncomeTransactions.map(categorizeTransaction),
+          ...monthExpenseTransactions.map(categorizeTransaction)
+        ]);
 
-      monthlySummaries.push({
-        month: monthKey,
-        monthName: HEBREW_MONTHS[month - 1],
-        income: monthIncome,
-        expense: monthExpense,
-        balance: monthIncome - monthExpense
-      });
+        const monthIncome = tabBreakdown.tomIncome + tabBreakdown.yaelIncome;
+        const monthExpense = tabBreakdown.tomBusiness + tabBreakdown.yaelBusiness +
+          tabBreakdown.sharedBusiness + tabBreakdown.home;
+
+        monthlySummaries.push({
+          month: monthKey,
+          monthName: HEBREW_MONTHS[month - 1],
+          income: monthIncome,
+          expense: monthExpense,
+          balance: monthIncome - monthExpense,
+          tabBreakdown
+        });
+      }
+    } else {
+      // Bi-monthly periods
+      const biMonthlyPeriods = [
+        { months: [1, 2], name: 'ינואר-פברואר' },
+        { months: [3, 4], name: 'מרץ-אפריל' },
+        { months: [5, 6], name: 'מאי-יוני' },
+        { months: [7, 8], name: 'יולי-אוגוסט' },
+        { months: [9, 10], name: 'ספטמבר-אוקטובר' },
+        { months: [11, 12], name: 'נובמבר-דצמבר' }
+      ];
+
+      for (const period of biMonthlyPeriods) {
+        const [month1, month2] = period.months;
+        const monthKey = `${year}-${month1.toString().padStart(2, '0')}-${month2.toString().padStart(2, '0')}`;
+
+        const periodIncomeTransactions = incomeTransactions.filter(t => {
+          const txMonth = parseInt(t.date.split('-')[1]);
+          return txMonth === month1 || txMonth === month2;
+        });
+
+        const periodExpenseTransactions = expenseTransactions.filter(t => {
+          const txMonth = parseInt(t.date.split('-')[1]);
+          return txMonth === month1 || txMonth === month2;
+        });
+
+        const tabBreakdown = sumTabBreakdowns([
+          ...periodIncomeTransactions.map(categorizeTransaction),
+          ...periodExpenseTransactions.map(categorizeTransaction)
+        ]);
+
+        const periodIncome = tabBreakdown.tomIncome + tabBreakdown.yaelIncome;
+        const periodExpense = tabBreakdown.tomBusiness + tabBreakdown.yaelBusiness +
+          tabBreakdown.sharedBusiness + tabBreakdown.home;
+
+        monthlySummaries.push({
+          month: monthKey,
+          monthName: period.name,
+          income: periodIncome,
+          expense: periodExpense,
+          balance: periodIncome - periodExpense,
+          tabBreakdown
+        });
+      }
     }
 
     // Calculate total income
@@ -132,7 +227,7 @@ export function useAnalytics(year: number) {
       topIncomeCategories,
       topExpenseCategories
     };
-  }, [year, incomeTransactions, expenseTransactions]);
+  }, [year, periodType, incomeTransactions, expenseTransactions, categoriesContext]);
 
   const allTransactions = useMemo(
     () => [...incomeTransactions, ...expenseTransactions].sort((a, b) =>

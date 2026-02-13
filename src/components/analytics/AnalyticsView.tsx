@@ -5,12 +5,14 @@ import { CategoryBreakdown } from './CategoryBreakdown';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { exportTransactionsToCSV } from '@/utils/exportCSV';
 import { Download } from 'lucide-react';
+import type { PeriodType } from '@/types/analytics.types';
 
 export function AnalyticsView() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [periodType, setPeriodType] = useState<PeriodType>('monthly');
 
-  const { analytics, allTransactions, loading, error } = useAnalytics(selectedYear);
+  const { analytics, allTransactions, loading, error } = useAnalytics(selectedYear, periodType);
 
   const handleExportCSV = () => {
     const filename = `transactions-${selectedYear}.csv`;
@@ -39,10 +41,34 @@ export function AnalyticsView() {
   return (
     <div className="space-y-6" dir="rtl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold">דוחות וניתוחים</h1>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Period Type Selector */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPeriodType('monthly')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                periodType === 'monthly'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              חודשי
+            </button>
+            <button
+              onClick={() => setPeriodType('bi-monthly')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                periodType === 'bi-monthly'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              דו חודשי
+            </button>
+          </div>
+
           {/* Year Selector */}
           <select
             value={selectedYear}

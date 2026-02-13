@@ -1,9 +1,21 @@
+export type PeriodType = 'monthly' | 'bi-monthly';
+
+export interface TabBreakdown {
+  tomIncome: number;
+  yaelIncome: number;
+  tomBusiness: number;
+  yaelBusiness: number;
+  sharedBusiness: number;
+  home: number;
+}
+
 export interface MonthlySummary {
-  month: string; // Format: "2025-01"
-  monthName: string; // Hebrew month name
+  month: string; // Format: "2025-01" or "2025-01-02" for bi-monthly
+  monthName: string; // Hebrew month name or range
   income: number;
   expense: number;
   balance: number;
+  tabBreakdown: TabBreakdown;
 }
 
 export interface CategorySummary {
