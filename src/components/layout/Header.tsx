@@ -16,7 +16,7 @@ export function Header() {
           <LogOut size={18} />
           <span>התנתק</span>
         </Button>
-        <h1 className="text-xl font-bold">מעקב הכנסות</h1>
+        <h1 className="text-xl font-bold">ניהול כספים - תום ויעל</h1>
       </div>
     </header>
   );
