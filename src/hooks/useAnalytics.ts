@@ -100,10 +100,21 @@ export function useAnalytics(
         if (category?.owner === 'תום') return { tomIncome: amount };
         if (category?.owner === 'יעל') return { yaelIncome: amount };
       } else {
-        if (category?.businessHome === 'עסק תום') return { tomBusiness: amount };
-        if (category?.businessHome === 'עסק יעל') return { yaelBusiness: amount };
-        if (category?.businessHome === 'עסק - משותף') return { sharedBusiness: amount };
-        if (category?.businessHome === 'בית') return { home: amount };
+        const businessHome = category?.businessHome;
+        // Log uncategorized expenses for debugging
+        if (!businessHome) {
+          console.warn('Expense transaction without businessHome:', {
+            id: transaction.id,
+            date: transaction.date,
+            categoryId: transaction.categoryId,
+            categoryName: transaction.categoryName,
+            amount
+          });
+        }
+        if (businessHome === 'עסק תום') return { tomBusiness: amount };
+        if (businessHome === 'עסק יעל') return { yaelBusiness: amount };
+        if (businessHome === 'עסק - משותף') return { sharedBusiness: amount };
+        if (businessHome === 'בית') return { home: amount };
       }
       return {};
     };
@@ -148,6 +159,14 @@ export function useAnalytics(
 
         const monthIncomeTransactions = incomeTransactions.filter(t => t.date.startsWith(monthKey));
         const monthExpenseTransactions = expenseTransactions.filter(t => t.date.startsWith(monthKey));
+
+        // Debug logging for January (month 1)
+        if (month === 1) {
+          console.log('January expenses count:', monthExpenseTransactions.length);
+          console.log('January expenses:', monthExpenseTransactions);
+          const categorized = monthExpenseTransactions.map(categorizeTransaction);
+          console.log('January categorized:', categorized);
+        }
 
         const tabBreakdown = sumTabBreakdowns([
           ...monthIncomeTransactions.map(categorizeTransaction),
