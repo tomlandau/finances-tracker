@@ -47,16 +47,6 @@ export function TransactionCard({ transaction, onTransactionChanged }: Transacti
     }
   };
 
-  // Format date to display
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('he-IL', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(date);
-  };
-
   // Format amount with currency
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('he-IL', {

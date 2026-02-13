@@ -11,7 +11,7 @@ import { TransactionsByCategoryView } from './TransactionsByCategoryView';
 import { PlannedTransactionsDrawer } from './PlannedTransactionsDrawer';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
-import { ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 
 type ViewMode = 'by-date' | 'by-category';
 

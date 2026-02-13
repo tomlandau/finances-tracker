@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import type { OwnerBreakdown, BusinessHomeBreakdown } from '@/types/analytics.types';
 
 interface DomainAnalysisProps {
@@ -143,7 +143,7 @@ export function DomainAnalysis({ incomeByOwner, expenseByBusinessHome }: DomainA
               <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
-          <CustomLegend payload={ownerData.map((item, index) => ({ payload: item }))} />
+          <CustomLegend payload={ownerData.map((item) => ({ payload: item }))} />
 
           {/* Owner Table */}
           <div className="mt-6">
@@ -221,7 +221,7 @@ export function DomainAnalysis({ incomeByOwner, expenseByBusinessHome }: DomainA
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
-              <CustomLegend payload={domainData.map((item, index) => ({ payload: item }))} />
+              <CustomLegend payload={domainData.map((item) => ({ payload: item }))} />
 
               {/* Domain Table */}
               <div className="mt-6">
@@ -328,7 +328,7 @@ export function DomainAnalysis({ incomeByOwner, expenseByBusinessHome }: DomainA
               <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
-          <CustomLegend payload={businessHomeData.map((item, index) => ({ payload: item }))} />
+          <CustomLegend payload={businessHomeData.map((item) => ({ payload: item }))} />
 
           {/* BusinessHome Table */}
           <div className="mt-6">
@@ -406,7 +406,7 @@ export function DomainAnalysis({ incomeByOwner, expenseByBusinessHome }: DomainA
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
-              <CustomLegend payload={domainData.map((item, index) => ({ payload: item }))} />
+              <CustomLegend payload={domainData.map((item) => ({ payload: item }))} />
 
               {/* Domain Table */}
               <div className="mt-6">

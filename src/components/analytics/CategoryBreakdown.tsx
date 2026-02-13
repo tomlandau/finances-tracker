@@ -27,7 +27,7 @@ export function CategoryBreakdown({ incomeCategories, expenseCategories }: Categ
   };
 
   const renderLabel = (props: any) => {
-    const { x, y, width, height, value } = props;
+    const { x, y, height, value } = props;
     const xPos = x - 8; // 15 pixels from the left edge of the bar
     return (
       <text
