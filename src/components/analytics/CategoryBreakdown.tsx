@@ -67,10 +67,17 @@ export function CategoryBreakdown({ incomeCategories, expenseCategories }: Categ
               <BarChart data={categories} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />
-                <YAxis dataKey="categoryName" type="category" width={120} />
+                <YAxis
+                  dataKey="categoryName"
+                  type="category"
+                  width={180}
+                  tick={{ fontSize: 13, fill: '#374151' }}
+                  style={{ direction: 'rtl', textAlign: 'right' }}
+                />
                 <Tooltip
                   formatter={(value: number | undefined) => value ? formatAmount(value) : '-'}
-                  labelStyle={{ textAlign: 'right' }}
+                  labelStyle={{ textAlign: 'right', direction: 'rtl' }}
+                  contentStyle={{ direction: 'rtl' }}
                 />
                 <Bar dataKey="total" fill={activeType === 'income' ? '#16a34a' : '#dc2626'}>
                   {categories.map((_, index) => (

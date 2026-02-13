@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import type { OwnerBreakdown, BusinessHomeBreakdown } from '@/types/analytics.types';
 
 interface DomainAnalysisProps {
@@ -73,19 +73,19 @@ export function DomainAnalysis({ incomeByOwner, expenseByBusinessHome }: DomainA
         {/* Owner Pie Chart */}
         <div>
           <h3 className="text-lg font-semibold mb-4 text-center">פילוח הכנסות לפי בעלים</h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={320}>
             <PieChart>
               <Pie
                 data={ownerData}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
-                label={(entry: any) => `${entry.name} (${entry.percentage.toFixed(0)}%)`}
-                outerRadius={80}
+                labelLine={true}
+                label={(entry: any) => `${entry.percentage.toFixed(0)}%`}
+                outerRadius={90}
                 fill="#8884d8"
                 dataKey="value"
                 onClick={(data) => setSelectedOwner(data.name)}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
               >
                 {ownerData.map((entry, index) => (
                   <Cell
@@ -96,6 +96,10 @@ export function DomainAnalysis({ incomeByOwner, expenseByBusinessHome }: DomainA
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
+              <Legend
+                wrapperStyle={{ direction: 'rtl', fontSize: '14px' }}
+                formatter={(_value, entry: any) => `${entry.payload.name} (${entry.payload.percentage.toFixed(0)}%)`}
+              />
             </PieChart>
           </ResponsiveContainer>
 
@@ -156,23 +160,28 @@ export function DomainAnalysis({ incomeByOwner, expenseByBusinessHome }: DomainA
 
           {selectedOwner && domainData.length > 0 ? (
             <>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
                   <Pie
                     data={domainData}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    label={(entry: any) => `${entry.name} (${entry.percentage.toFixed(0)}%)`}
-                    outerRadius={80}
+                    labelLine={true}
+                    label={(entry: any) => `${entry.percentage.toFixed(0)}%`}
+                    outerRadius={90}
                     fill="#8884d8"
                     dataKey="value"
+                    style={{ fontSize: '14px', fontWeight: 'bold' }}
                   >
                     {domainData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
+                  <Legend
+                    wrapperStyle={{ direction: 'rtl', fontSize: '14px' }}
+                    formatter={(_value, entry: any) => `${entry.payload.name} (${entry.payload.percentage.toFixed(0)}%)`}
+                  />
                 </PieChart>
               </ResponsiveContainer>
 
@@ -252,19 +261,19 @@ export function DomainAnalysis({ incomeByOwner, expenseByBusinessHome }: DomainA
         {/* BusinessHome Pie Chart */}
         <div>
           <h3 className="text-lg font-semibold mb-4 text-center">פילוח הוצאות לפי עסקי/בית</h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={320}>
             <PieChart>
               <Pie
                 data={businessHomeData}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
-                label={(entry: any) => `${entry.name} (${entry.percentage.toFixed(0)}%)`}
-                outerRadius={80}
+                labelLine={true}
+                label={(entry: any) => `${entry.percentage.toFixed(0)}%`}
+                outerRadius={90}
                 fill="#8884d8"
                 dataKey="value"
                 onClick={(data) => setSelectedBusinessHome(data.name)}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
               >
                 {businessHomeData.map((entry, index) => (
                   <Cell
@@ -275,6 +284,10 @@ export function DomainAnalysis({ incomeByOwner, expenseByBusinessHome }: DomainA
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
+              <Legend
+                wrapperStyle={{ direction: 'rtl', fontSize: '14px' }}
+                formatter={(_value, entry: any) => `${entry.payload.name} (${entry.payload.percentage.toFixed(0)}%)`}
+              />
             </PieChart>
           </ResponsiveContainer>
 
@@ -335,23 +348,28 @@ export function DomainAnalysis({ incomeByOwner, expenseByBusinessHome }: DomainA
 
           {selectedBusinessHome && domainData.length > 0 ? (
             <>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
                   <Pie
                     data={domainData}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    label={(entry: any) => `${entry.name} (${entry.percentage.toFixed(0)}%)`}
-                    outerRadius={80}
+                    labelLine={true}
+                    label={(entry: any) => `${entry.percentage.toFixed(0)}%`}
+                    outerRadius={90}
                     fill="#8884d8"
                     dataKey="value"
+                    style={{ fontSize: '14px', fontWeight: 'bold' }}
                   >
                     {domainData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
+                  <Legend
+                    wrapperStyle={{ direction: 'rtl', fontSize: '14px' }}
+                    formatter={(_value, entry: any) => `${entry.payload.name} (${entry.payload.percentage.toFixed(0)}%)`}
+                  />
                 </PieChart>
               </ResponsiveContainer>
 
