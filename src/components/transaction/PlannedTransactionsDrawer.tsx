@@ -51,14 +51,18 @@ export function PlannedTransactionsDrawer({
       </button>
 
       {/* Drawer Content - Expandable */}
-      {isOpen && (
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
         <div className="px-4 pb-4 border-t border-blue-200 pt-4 bg-white">
           <TransactionList
             transactions={transactions}
             onTransactionChanged={onTransactionChanged}
           />
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -101,10 +101,13 @@ export function FilterPanel({ filters, onFilterChange, tab, categories, isOpen }
     return count;
   }, [filters]);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4 mb-4" dir="rtl">
+    <div
+      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+        isOpen ? 'max-h-[1000px] opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'
+      }`}
+    >
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4" dir="rtl">
       {/* Category Filter */}
       <Combobox
         id="filter-category"
@@ -167,6 +170,7 @@ export function FilterPanel({ filters, onFilterChange, tab, categories, isOpen }
           נקה סינונים ({activeFilterCount})
         </Button>
       )}
+      </div>
     </div>
   );
 }

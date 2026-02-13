@@ -63,6 +63,15 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
     clearOptimisticTransactions
   } = useTabTransactions(tab, selectedMonth, filters);
 
+  // Calculate planned summary
+  const plannedSummary = useMemo(() => {
+    const total = plannedTransactions.reduce((sum, t) => sum + t.amount, 0);
+    return {
+      total,
+      count: plannedTransactions.length,
+    };
+  }, [plannedTransactions]);
+
   // Count active filters (must be before early returns!)
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -101,7 +110,13 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
 
   return (
     <div className="space-y-4">
-      <SummaryCard total={summary.total} count={summary.count} type={tab.transactionType} />
+      <SummaryCard
+        total={summary.total}
+        count={summary.count}
+        type={tab.transactionType}
+        plannedTotal={plannedSummary.total}
+        plannedCount={plannedSummary.count}
+      />
 
       {/* Filter Toggle Button */}
       <Button
