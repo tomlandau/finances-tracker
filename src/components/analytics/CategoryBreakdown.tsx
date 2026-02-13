@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import type { CategorySummary } from '@/types/analytics.types';
 
 interface CategoryBreakdownProps {
@@ -24,6 +24,24 @@ export function CategoryBreakdown({ incomeCategories, expenseCategories }: Categ
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
+  };
+
+  const renderLabel = (props: any) => {
+    const { x, y, width, height, value } = props;
+    const xPos = x - 8; // 15 pixels from the left edge of the bar
+    return (
+      <text
+        x={xPos}
+        y={y + height / 2}
+        fill="white"
+        fontSize={13}
+        fontWeight={500}
+        textAnchor="start"
+        dominantBaseline="middle"
+      >
+        {value}
+      </text>
+    );
   };
 
   return (
@@ -62,27 +80,29 @@ export function CategoryBreakdown({ incomeCategories, expenseCategories }: Categ
       ) : (
         <>
           {/* Bar Chart */}
-          <div className="mb-6">
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={categories} layout="vertical" margin={{ left: 20 }}>
+          <div className="mb-6 bg-gray-900 rounded-lg p-4">
+            <ResponsiveContainer width="100%" height={Math.max(400, categories.length * 50)}>
+              <BarChart data={categories} layout="vertical" margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis
-                  dataKey="categoryName"
-                  type="category"
-                  width={220}
-                  tick={{ fontSize: 12, fill: '#374151' }}
-                  interval={0}
-                />
+                <XAxis type="number" reversed={true} />
+                <YAxis type="category" hide={true} />
                 <Tooltip
                   formatter={(value: number | undefined) => value ? formatAmount(value) : '-'}
+                  labelFormatter={(label: any) => {
+                    const category = categories.find((c, idx) => idx === label || c.categoryName === label);
+                    return category?.categoryName || label;
+                  }}
                   labelStyle={{ textAlign: 'right', direction: 'rtl' }}
                   contentStyle={{ direction: 'rtl' }}
                 />
-                <Bar dataKey="total" fill={activeType === 'income' ? '#16a34a' : '#dc2626'}>
+                <Bar dataKey="total" fill={activeType === 'income' ? '#16a34a' : '#dc2626'} barSize={40}>
                   {categories.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
+                  <LabelList
+                    dataKey="categoryName"
+                    content={renderLabel}
+                  />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
