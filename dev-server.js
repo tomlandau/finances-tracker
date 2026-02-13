@@ -242,7 +242,7 @@ const recentHandler = async (req, res) => {
 
   try {
     const type = req.query.type || 'all';
-    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 10000);
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
     const categoryId = req.query.categoryId;
@@ -258,11 +258,12 @@ const recentHandler = async (req, res) => {
 
     const buildFilterFormula = (dateField, categoryField) => {
       const conditions = [];
+      // Date range filters (inclusive)
       if (startDate) {
-        conditions.push(`IS_AFTER({${dateField}}, '${startDate}')`);
+        conditions.push(`{${dateField}} >= '${startDate}'`);
       }
       if (endDate) {
-        conditions.push(`IS_BEFORE({${dateField}}, '${endDate}')`);
+        conditions.push(`{${dateField}} <= '${endDate}'`);
       }
       if (categoryId) {
         conditions.push(`FIND('${categoryId}', ARRAYJOIN({${categoryField}}))`);

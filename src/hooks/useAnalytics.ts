@@ -160,14 +160,6 @@ export function useAnalytics(
         const monthIncomeTransactions = incomeTransactions.filter(t => t.date.startsWith(monthKey));
         const monthExpenseTransactions = expenseTransactions.filter(t => t.date.startsWith(monthKey));
 
-        // Debug logging for January (month 1)
-        if (month === 1) {
-          console.log('January expenses count:', monthExpenseTransactions.length);
-          console.log('January expenses:', monthExpenseTransactions);
-          const categorized = monthExpenseTransactions.map(categorizeTransaction);
-          console.log('January categorized:', categorized);
-        }
-
         const tabBreakdown = sumTabBreakdowns([
           ...monthIncomeTransactions.map(categorizeTransaction),
           ...monthExpenseTransactions.map(categorizeTransaction)

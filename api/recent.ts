@@ -28,7 +28,7 @@ export default async function handler(
   try {
     // Get query parameters
     const type = (req.query.type as string) || 'all';
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 10000);
     const startDate = req.query.startDate as string;
     const endDate = req.query.endDate as string;
     const categoryId = req.query.categoryId as string;
@@ -54,12 +54,12 @@ export default async function handler(
     ): string => {
       const conditions: string[] = [];
 
-      // Date range filters
+      // Date range filters (inclusive)
       if (startDate) {
-        conditions.push(`IS_AFTER({${dateField}}, '${startDate}')`);
+        conditions.push(`{${dateField}} >= '${startDate}'`);
       }
       if (endDate) {
-        conditions.push(`IS_BEFORE({${dateField}}, '${endDate}')`);
+        conditions.push(`{${dateField}} <= '${endDate}'`);
       }
 
       // Category filter
