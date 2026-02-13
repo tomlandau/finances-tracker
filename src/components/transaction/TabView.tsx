@@ -130,6 +130,13 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
         isOpen={filterPanelOpen}
       />
 
+      {/* Planned Transactions Drawer */}
+      <PlannedTransactionsDrawer
+        transactions={plannedTransactions}
+        type={tab.transactionType}
+        onTransactionChanged={onTransactionChanged}
+      />
+
       {transactions.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500">אין תנועות לחודש זה</p>
@@ -137,13 +144,6 @@ export function TabView({ tab, selectedMonth, onOptimisticHandlersReady, onTrans
       ) : (
         <TransactionList transactions={transactions} onTransactionChanged={onTransactionChanged} />
       )}
-
-      {/* Planned Transactions Drawer */}
-      <PlannedTransactionsDrawer
-        transactions={plannedTransactions}
-        type={tab.transactionType}
-        onTransactionChanged={onTransactionChanged}
-      />
     </div>
   );
 }
