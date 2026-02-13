@@ -1,8 +1,12 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const { logout } = useAuth();
 
   return (
@@ -17,6 +21,14 @@ export function Header() {
           <span>התנתק</span>
         </Button>
         <h1 className="text-xl font-bold">ניהול כספים - תום ויעל</h1>
+        <Button
+          variant="secondary"
+          onClick={onMenuClick}
+          className="flex items-center gap-2"
+          aria-label="פתח תפריט"
+        >
+          <Menu size={20} />
+        </Button>
       </div>
     </header>
   );

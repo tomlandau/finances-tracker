@@ -6,7 +6,7 @@ export interface Category {
   active: boolean;
   // Income category fields
   owner?: string;        // של מי ההכנסה (Single Select)
-  domain?: string;       // תחום (Single Select)
+  domain?: string;       // תחום (Single Select) - exists for both income and expense
   // Expense category fields
   businessHome?: string; // עסקי/בית (Single Select)
   expenseType?: string;  // סוג הוצאה (Single Select)

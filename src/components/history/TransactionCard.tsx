@@ -76,26 +76,34 @@ export function TransactionCard({ transaction, onTransactionChanged }: Transacti
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2">
               <h3 className="font-semibold text-gray-900">{transaction.categoryName}</h3>
               {category && isIncome && category.domain && (
                 <span className="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">
                   {category.domain}
                 </span>
               )}
-              {category && !isIncome && category.expenseType && (
-                <span className="inline-block px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded">
-                  {category.expenseType}
+              {category && !isIncome && (
+                <>
+                  {category.domain && (
+                    <span className="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">
+                      {category.domain}
+                    </span>
+                  )}
+                  {category.expenseType && (
+                    <span className="inline-block px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded">
+                      {category.expenseType}
+                    </span>
+                  )}
+                </>
+              )}
+              {transaction.pending && (
+                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
+                  ממתין...
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-600">{formatDate(transaction.date)}</p>
           </div>
-          {transaction.pending && (
-            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
-              ממתין...
-            </span>
-          )}
         </div>
         <div className="text-left">
           <p className={`text-xl font-bold ${textColor}`}>

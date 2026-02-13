@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTab } from '@/hooks/useTab';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Layout } from '@/components/layout/Layout';
-import { TransactionTabs } from '@/components/transaction/TransactionTabs';
 import { TabView, type OptimisticTransactionHandlers } from '@/components/transaction/TabView';
 import { MonthSelector } from '@/components/transaction/MonthSelector';
 import { AnalyticsView } from '@/components/analytics/AnalyticsView';
@@ -72,7 +71,6 @@ function AppContent() {
               <MonthSelector selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
             </div>
           )}
-          <TransactionTabs />
 
           {/* Conditional rendering based on tab type */}
           {isAnalytics ? (
