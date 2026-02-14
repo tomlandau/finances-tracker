@@ -4,9 +4,9 @@
  */
 
 import type { VercelResponse } from '@vercel/node';
-import { withAuth, AuthRequest } from '../_lib/middleware/auth';
-import { withErrorHandler, ApiError } from '../_lib/middleware/errorHandler';
-import { logAuditEvent, getClientIp } from '../_lib/utils/auditLog';
+import { withAuth, AuthRequest } from '../_middleware-auth';
+import { withErrorHandler, ApiError } from '../_middleware-error';
+import { logAuditEvent, getClientIp } from '../_utils-audit';
 
 async function handler(req: AuthRequest, res: VercelResponse) {
   // Only POST allowed

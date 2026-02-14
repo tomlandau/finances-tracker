@@ -8,7 +8,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
-import { generateTotpSecret, generateQRCode, verifyTotpCode } from '../_lib/utils/totp';
+import { generateTotpSecret, generateQRCode, verifyTotpCode } from '../_utils-totp';
 
 interface TempTokenPayload {
   userId: string;

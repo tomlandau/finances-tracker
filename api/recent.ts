@@ -1,5 +1,5 @@
 import type { VercelResponse } from '@vercel/node';
-import { withAuth, type AuthRequest } from './_lib/middleware/auth';
+import { withAuth, type AuthRequest } from './_middleware-auth';
 
 interface Transaction {
   id: string;
