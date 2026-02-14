@@ -1,4 +1,5 @@
-import { createScraper, type Transaction as ScrapedTransaction } from 'israeli-bank-scrapers';
+import { createScraper } from 'israeli-bank-scrapers';
+import type { Transaction as ScrapedTransaction } from 'israeli-bank-scrapers/lib/transactions';
 import Airtable from 'airtable';
 import { format, subDays } from 'date-fns';
 import { CredentialsManager } from './credentials-manager';
@@ -124,8 +125,8 @@ export class ScraperManager {
     }
 
     // סינון חשבונות לפי accountNumbers (אם צוין)
-    let accounts = scrapeResult.accounts;
-    if (bankCreds.accountNumbers && bankCreds.accountNumbers.length > 0) {
+    let accounts = scrapeResult.accounts || [];
+    if (bankCreds.accountNumbers && bankCreds.accountNumbers.length > 0 && accounts.length > 0) {
       const originalCount = accounts.length;
       accounts = accounts.filter(account =>
         bankCreds.accountNumbers!.includes(account.accountNumber)
@@ -150,7 +151,7 @@ export class ScraperManager {
     }
 
     // קבלת יתרה (מהחשבון הראשון)
-    const balance = scrapeResult.accounts[0]?.balance;
+    const balance = scrapeResult.accounts?.[0]?.balance;
 
     return {
       accountName: bankCreds.accountName,
