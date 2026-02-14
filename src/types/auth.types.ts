@@ -12,6 +12,8 @@ export interface AuthState {
   twoFactorRequired: boolean;
   tempToken: string | null;
   requireSetup: boolean;
+  hasTotp: boolean;
+  hasWebAuthn: boolean;
   login: (username: string, password: string) => Promise<LoginResult>;
   loginWithTotp: (tempToken: string, totpCode: string) => Promise<boolean>;
   loginWithWebAuthn: (tempToken: string) => Promise<boolean>;
@@ -26,6 +28,8 @@ export interface LoginResult {
   requireSetup: boolean;
   tempToken?: string;
   user?: User;
+  hasTotp?: boolean;
+  hasWebAuthn?: boolean;
 }
 
 export type TwoFactorMethod = 'totp' | 'webauthn' | null;

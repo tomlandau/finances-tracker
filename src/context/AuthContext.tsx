@@ -2,6 +2,7 @@ import { createContext, useState, useEffect, ReactNode } from 'react';
 import type { AuthState, LoginResult } from '@/types/auth.types';
 import type { User } from '@/types/user.types';
 import { API_BASE } from '@/config/api';
+import { authenticateWithWebAuthn } from '@/services/webauthn';
 
 export const AuthContext = createContext<AuthState | null>(null);
 
@@ -11,6 +12,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [twoFactorRequired, setTwoFactorRequired] = useState<boolean>(false);
   const [tempToken, setTempToken] = useState<string | null>(null);
   const [requireSetup, setRequireSetup] = useState<boolean>(false);
+  const [hasTotp, setHasTotp] = useState<boolean>(false);
+  const [hasWebAuthn, setHasWebAuthn] = useState<boolean>(false);
 
   const isAuthenticated = user !== null;
 
@@ -62,11 +65,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.requireTotp) {
         setTwoFactorRequired(true);
         setTempToken(data.tempToken);
+        setHasTotp(data.hasTotp || false);
+        setHasWebAuthn(data.hasWebAuthn || false);
         return {
           success: false,
           requireTotp: true,
           requireSetup: false,
           tempToken: data.tempToken,
+          hasTotp: data.hasTotp,
+          hasWebAuthn: data.hasWebAuthn,
         };
       }
 
@@ -129,10 +136,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loginWithWebAuthn = async (_token: string): Promise<boolean> => {
-    // Phase 5: WebAuthn implementation
-    console.log('WebAuthn not yet implemented');
-    return false;
+  const loginWithWebAuthn = async (token: string): Promise<boolean> => {
+    try {
+      const userData = await authenticateWithWebAuthn(token);
+      setUser(userData);
+      setTwoFactorRequired(false);
+      setTempToken(null);
+      setRequireSetup(false);
+      setHasTotp(false);
+      setHasWebAuthn(false);
+
+      return true;
+    } catch (error) {
+      console.error('WebAuthn login error:', error);
+      throw error;
+    }
   };
 
   const logout = async () => {
@@ -180,6 +198,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         twoFactorRequired,
         tempToken,
         requireSetup,
+        hasTotp,
+        hasWebAuthn,
         login,
         loginWithTotp,
         loginWithWebAuthn,

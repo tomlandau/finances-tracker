@@ -1,6 +1,6 @@
 import { useTab } from '@/hooks/useTab';
 import { TAB_CONFIGS } from '@/utils/tabConfigs';
-import { X } from 'lucide-react';
+import { X, Settings } from 'lucide-react';
 import type { TabId } from '@/types/tab.types';
 
 interface SidebarProps {
@@ -11,8 +11,9 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { currentTab, setTab } = useTab();
   const isAnalytics = currentTab === 'analytics' as any;
+  const isSettings = currentTab === 'settings' as any;
 
-  const handleTabClick = (tabId: TabId | 'analytics') => {
+  const handleTabClick = (tabId: TabId | 'analytics' | 'settings') => {
     setTab(tabId as any);
     onClose();
   };
@@ -74,6 +75,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               }`}
             >
               דוחות
+            </button>
+
+            {/* Settings Tab */}
+            <button
+              onClick={() => handleTabClick('settings')}
+              className={`w-full text-right px-4 py-3 rounded-lg font-medium text-sm transition-colors flex items-center ${
+                isSettings
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Settings size={16} className="ml-2" />
+              הגדרות אבטחה
             </button>
           </div>
         </nav>

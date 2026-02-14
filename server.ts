@@ -18,6 +18,14 @@ import refreshHandler from './api/auth/refresh';
 import verifyHandler from './api/auth/verify';
 import tfaHandler from './api/auth/2fa';
 import loginTotpHandler from './api/auth/login-totp';
+import loginWebAuthnHandler from './api/auth/login-webauthn';
+
+// Import WebAuthn endpoints
+import webauthnRegisterOptionsHandler from './api/auth/webauthn/register-options';
+import webauthnRegisterVerifyHandler from './api/auth/webauthn/register-verify';
+import webauthnLoginOptionsHandler from './api/auth/webauthn/login-options';
+import webauthnCredentialsHandler from './api/auth/webauthn/credentials';
+import webauthnGenerateTokenHandler from './api/auth/webauthn/generate-token';
 
 // Load environment variables (only in development - Railway sets them directly)
 if (process.env.NODE_ENV !== 'production') {
@@ -65,6 +73,14 @@ app.post('/api/auth/refresh', refreshHandler);
 app.get('/api/auth/verify', verifyHandler);
 app.post('/api/auth/2fa', tfaHandler);
 app.post('/api/auth/login-totp', loginTotpHandler);
+app.post('/api/auth/login-webauthn', loginWebAuthnHandler);
+
+// WebAuthn routes
+app.post('/api/auth/webauthn/register-options', webauthnRegisterOptionsHandler);
+app.post('/api/auth/webauthn/register-verify', webauthnRegisterVerifyHandler);
+app.post('/api/auth/webauthn/login-options', webauthnLoginOptionsHandler);
+app.all('/api/auth/webauthn/credentials', webauthnCredentialsHandler);
+app.post('/api/auth/webauthn/generate-token', webauthnGenerateTokenHandler);
 
 // 404 handler
 app.use((_req, res) => {

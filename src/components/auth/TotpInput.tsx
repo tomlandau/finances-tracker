@@ -12,9 +12,10 @@ interface TotpInputProps {
   onSuccess: () => void;
   onCancel: () => void;
   loginWithTotp: (tempToken: string, totpCode: string) => Promise<boolean>;
+  onUseWebAuthnInstead?: () => void;
 }
 
-export function TotpInput({ tempToken, onSuccess, onCancel, loginWithTotp }: TotpInputProps) {
+export function TotpInput({ tempToken, onSuccess, onCancel, loginWithTotp, onUseWebAuthnInstead }: TotpInputProps) {
   const [totpCode, setTotpCode] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,6 +95,18 @@ export function TotpInput({ tempToken, onSuccess, onCancel, loginWithTotp }: Tot
           <p>הקוד מתחדש כל 30 שניות</p>
           <p className="mt-1">אם הקוד לא עובד, נסה להמתין לקוד הבא</p>
         </div>
+
+        {onUseWebAuthnInstead && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <button
+              onClick={onUseWebAuthnInstead}
+              disabled={isSubmitting}
+              className="w-full text-sm text-blue-600 hover:text-blue-700 py-2 disabled:opacity-50"
+            >
+              השתמש באימות ביומטרי במקום
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

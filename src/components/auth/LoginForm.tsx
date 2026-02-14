@@ -2,7 +2,7 @@
  * Login Form Component - Phase 6: Client Integration
  * Handles multi-stage authentication flow:
  * 1. Username/Password
- * 2. TOTP verification (if user has 2FA)
+ * 2. TOTP/WebAuthn verification (if user has 2FA)
  * 3. Setup flow (if user needs to configure 2FA)
  */
 
@@ -12,13 +12,28 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { TotpInput } from './TotpInput';
 import { TotpSetup } from './TotpSetup';
+import { WebAuthnSetup } from './WebAuthnSetup';
+import { WebAuthnPrompt } from './WebAuthnPrompt';
+import { TwoFactorChoice } from './TwoFactorChoice';
+import type { TwoFactorMethod } from '@/types/auth.types';
 
 export function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, loginWithTotp, twoFactorRequired, requireSetup, tempToken } = useAuth();
+  const [setupMethod, setSetupMethod] = useState<TwoFactorMethod>(null);
+  const [loginMethod, setLoginMethod] = useState<TwoFactorMethod>(null);
+  const {
+    login,
+    loginWithTotp,
+    loginWithWebAuthn,
+    twoFactorRequired,
+    requireSetup,
+    tempToken,
+    hasTotp,
+    hasWebAuthn,
+  } = useAuth();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -58,29 +73,94 @@ export function LoginForm() {
     setUsername('');
     setPassword('');
     setError('');
+    setSetupMethod(null);
+    setLoginMethod(null);
   };
 
-  // Show TOTP setup screen if required
+  const handleWebAuthnSuccess = (user: any) => {
+    // After successful WebAuthn login, the user is set in AuthContext
+    // Nothing else needed here
+    console.log('WebAuthn login successful:', user);
+  };
+
+  // Show 2FA setup flow if required
   if (requireSetup && tempToken) {
-    return (
-      <TotpSetup
-        tempToken={tempToken}
-        onSuccess={handleSetupSuccess}
-        onCancel={handleCancel}
-      />
-    );
+    // First, let user choose between TOTP and WebAuthn
+    if (!setupMethod) {
+      return (
+        <TwoFactorChoice
+          username={username}
+          onChooseTotp={() => setSetupMethod('totp')}
+          onChooseWebAuthn={() => setSetupMethod('webauthn')}
+          onBack={handleCancel}
+        />
+      );
+    }
+
+    // Show the chosen setup method
+    if (setupMethod === 'totp') {
+      return (
+        <TotpSetup
+          tempToken={tempToken}
+          onSuccess={handleSetupSuccess}
+          onCancel={handleCancel}
+        />
+      );
+    }
+
+    if (setupMethod === 'webauthn') {
+      return (
+        <WebAuthnSetup
+          tempToken={tempToken}
+          username={username}
+          onSuccess={handleSetupSuccess}
+          onCancel={() => setSetupMethod(null)}
+        />
+      );
+    }
   }
 
-  // Show TOTP input screen if 2FA is required
+  // Show 2FA verification if required
   if (twoFactorRequired && tempToken) {
-    return (
-      <TotpInput
-        tempToken={tempToken}
-        onSuccess={handleTotpSuccess}
-        onCancel={handleCancel}
-        loginWithTotp={loginWithTotp}
-      />
-    );
+    // If user hasn't chosen a method yet, show options or auto-select
+    if (!loginMethod) {
+      // If only one method is available, auto-select it
+      if (hasTotp && !hasWebAuthn) {
+        setLoginMethod('totp');
+      } else if (hasWebAuthn && !hasTotp) {
+        setLoginMethod('webauthn');
+      } else if (hasTotp && hasWebAuthn) {
+        // Both available - let user choose (default to WebAuthn)
+        setLoginMethod('webauthn');
+      }
+      return null; // Will re-render with method selected
+    }
+
+    // Show TOTP input
+    if (loginMethod === 'totp') {
+      return (
+        <TotpInput
+          tempToken={tempToken}
+          onSuccess={handleTotpSuccess}
+          onCancel={handleCancel}
+          loginWithTotp={loginWithTotp}
+          onUseWebAuthnInstead={hasWebAuthn ? () => setLoginMethod('webauthn') : undefined}
+        />
+      );
+    }
+
+    // Show WebAuthn prompt
+    if (loginMethod === 'webauthn') {
+      return (
+        <WebAuthnPrompt
+          tempToken={tempToken}
+          username={username}
+          onSuccess={handleWebAuthnSuccess}
+          onCancel={handleCancel}
+          onUseTotpInstead={() => setLoginMethod('totp')}
+        />
+      );
+    }
   }
 
   // Initial login screen

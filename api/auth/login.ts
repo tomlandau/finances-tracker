@@ -9,6 +9,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { withErrorHandler, ApiError } from '../../lib/middleware-error';
 import { logAuditEvent, getClientIp } from '../../lib/utils-audit';
+import { userHasWebAuthnCredentials } from '../../lib/utils-webauthn';
 
 interface LoginRequest {
   username: string;
@@ -125,12 +126,14 @@ async function handler(req: Request, res: Response) {
     throw new ApiError(401, 'Invalid credentials', 'INVALID_CREDENTIALS');
   }
 
-  // Check if 2FA is enabled (TOTP secret exists)
-  const has2FA = !!user.totpSecret;
+  // Check if 2FA is enabled (TOTP secret exists or WebAuthn credentials)
+  const hasTotp = !!user.totpSecret;
+  const hasWebAuthn = await userHasWebAuthnCredentials(user.id);
+  const has2FA = hasTotp || hasWebAuthn;
 
   if (has2FA) {
     // User has 2FA enabled - return temp token
-    // The client will then call /api/auth/login-totp with the TOTP code
+    // The client will then call /api/auth/login-totp or /api/auth/login-webauthn
     const tempToken = jwt.sign(
       { userId: user.id, username: user.username, stage: 'awaiting-totp' },
       process.env.JWT_SECRET!,
@@ -139,13 +142,15 @@ async function handler(req: Request, res: Response) {
 
     return res.status(200).json({
       requireTotp: true,
-      tempToken
+      tempToken,
+      hasTotp,
+      hasWebAuthn,
     });
   }
 
   // No 2FA - check if setup is required
-  if (!user.totpSecret) {
-    // User doesn't have 2FA set up yet
+  if (!hasTotp && !hasWebAuthn) {
+    // User doesn't have any 2FA set up yet
     // Return temp token for 2FA setup flow
     const tempToken = jwt.sign(
       { userId: user.id, username: user.username, stage: 'awaiting-setup' },
@@ -181,8 +186,8 @@ async function handler(req: Request, res: Response) {
     user: {
       id: user.id,
       username: user.username,
-      has2FA: false,
-      hasWebAuthn: false
+      has2FA: has2FA,
+      hasWebAuthn: hasWebAuthn
     }
   });
 }

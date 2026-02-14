@@ -6,6 +6,7 @@ import { Layout } from '@/components/layout/Layout';
 import { TabView, type OptimisticTransactionHandlers } from '@/components/transaction/TabView';
 import { MonthSelector } from '@/components/transaction/MonthSelector';
 import { AnalyticsView } from '@/components/analytics/AnalyticsView';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { FAB } from '@/components/ui/FAB';
 import { AddTransactionModal } from '@/components/transaction/AddTransactionModal';
@@ -29,8 +30,9 @@ function AppContent() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const optimisticHandlersRef = useRef<OptimisticTransactionHandlers | null>(null);
 
-  // Check if current tab is analytics
+  // Check if current tab is analytics or settings
   const isAnalytics = currentTab === ('analytics' as any);
+  const isSettings = currentTab === ('settings' as any);
 
   // Find the current tab config
   const tabConfig = useMemo(
@@ -60,6 +62,16 @@ function AppContent() {
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
   }, []);
+
+  // If on settings page, render it directly without Layout wrapper
+  if (isSettings) {
+    return (
+      <>
+        <OfflineIndicator />
+        <SettingsPage />
+      </>
+    );
+  }
 
   return (
     <>
