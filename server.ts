@@ -23,7 +23,7 @@ import loginTotpHandler from './api/auth/login-totp';
 config({ path: '.env.local' });
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
 // Middleware
 app.use(cors({
@@ -79,8 +79,10 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 // Start server
-app.listen(PORT, () => {
+// Bind to 0.0.0.0 to accept connections from outside the container (required for Railway)
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Listening on 0.0.0.0:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`CORS origins: ${process.env.ALLOWED_ORIGINS || 'http://localhost:5173'}`);
 });
