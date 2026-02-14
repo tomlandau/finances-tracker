@@ -63,12 +63,14 @@ function AppContent() {
     return () => window.removeEventListener('online', handleOnline);
   }, []);
 
-  // If on settings page, render it directly without Layout wrapper
+  // If on settings page, render it with Layout wrapper for navigation
   if (isSettings) {
     return (
       <>
         <OfflineIndicator />
-        <SettingsPage />
+        <Layout>
+          <SettingsPage />
+        </Layout>
       </>
     );
   }
