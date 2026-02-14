@@ -231,14 +231,21 @@ export async function verifyAuthenticationAndUpdateCounter(
   response: AuthenticationResponseJSON,
   expectedChallenge: string
 ): Promise<{ verified: boolean; credential: StoredCredential }> {
+  console.log('🔐 verifyAuthenticationAndUpdateCounter called for userId:', userId);
+  console.log('📋 Looking for credential ID:', response.id.substring(0, 20) + '...');
+
   // Get the credential from Airtable
   const credential = await getCredentialById(userId, response.id);
 
   if (!credential) {
+    console.error('❌ Credential not found in Airtable!');
     throw new Error('Credential not found');
   }
 
+  console.log('✅ Found credential in Airtable:', credential.deviceName);
+
   // Verify the authentication response
+  console.log('🔍 Starting authentication verification...');
   let verification: VerifiedAuthenticationResponse;
   try {
     verification = await verifyAuthenticationResponse({
@@ -253,22 +260,28 @@ export async function verifyAuthenticationAndUpdateCounter(
       },
       requireUserVerification: true,
     });
+    console.log('✅ Authentication verification completed');
   } catch (error) {
+    console.error('❌ Authentication verification failed:', error);
     throw new Error(`Authentication verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
   const { verified, authenticationInfo } = verification;
 
   if (!verified) {
+    console.error('❌ Verification returned false');
     throw new Error('Authentication verification failed');
   }
 
+  console.log('💾 Updating credential counter in Airtable...');
   // Update counter and last used timestamp
   const table = getCredentialsTable();
   await table.update(credential.id, {
     'Counter': authenticationInfo.newCounter,
     'Last Used': new Date().toISOString(),
   });
+
+  console.log('✅ Counter updated successfully');
 
   return {
     verified: true,

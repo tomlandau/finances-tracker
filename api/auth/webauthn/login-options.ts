@@ -37,8 +37,13 @@ async function handler(req: Request, res: Response) {
     throw new ApiError(403, 'Invalid token stage', 'INVALID_STAGE');
   }
 
+  console.log('🔐 Generating WebAuthn login options for user:', decoded.username);
+
   // Generate authentication options for this user
   const options = await generateAuthenticationOptionsForUser(decoded.userId);
+
+  console.log('📋 Generated options with challenge:', options.challenge.substring(0, 20) + '...');
+  console.log('📋 allowCredentials count:', options.allowCredentials?.length || 0);
 
   // Store the challenge in a new temp token for verification
   const challengeToken = jwt.sign(
@@ -51,6 +56,8 @@ async function handler(req: Request, res: Response) {
     process.env.JWT_SECRET!,
     { expiresIn: '5m' }
   );
+
+  console.log('✅ Returning login options to client');
 
   return res.status(200).json({
     options,

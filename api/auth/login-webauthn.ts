@@ -76,6 +76,9 @@ async function handler(req: Request, res: Response) {
     throw new ApiError(403, 'Invalid token stage', 'INVALID_STAGE');
   }
 
+  console.log('🔍 Verifying WebAuthn login for user:', decoded.username);
+  console.log('📋 Credential ID:', credential.id.substring(0, 20) + '...');
+
   try {
     // Verify the authentication response
     const { verified, credential: storedCredential } = await verifyAuthenticationAndUpdateCounter(
@@ -83,6 +86,8 @@ async function handler(req: Request, res: Response) {
       credential,
       decoded.challenge
     );
+
+    console.log('✅ WebAuthn verification result:', verified);
 
     if (!verified) {
       // Log failed login
