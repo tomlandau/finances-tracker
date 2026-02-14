@@ -66,7 +66,8 @@ export function SettingsPage() {
     // Generate a temp token for adding WebAuthn
     // We need to get this from a new endpoint or use the current session
     try {
-      const response = await fetch('/api/auth/webauthn/generate-token', {
+      const API_URL = import.meta.env.VITE_API_URL || '/api';
+      const response = await fetch(`${API_URL}/auth/webauthn/generate-token`, {
         method: 'POST',
         credentials: 'include',
       });
