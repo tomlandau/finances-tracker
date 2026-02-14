@@ -19,8 +19,10 @@ import verifyHandler from './api/auth/verify';
 import tfaHandler from './api/auth/2fa';
 import loginTotpHandler from './api/auth/login-totp';
 
-// Load environment variables
-config({ path: '.env.local' });
+// Load environment variables (only in development - Railway sets them directly)
+if (process.env.NODE_ENV !== 'production') {
+  config({ path: '.env.local' });
+}
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
