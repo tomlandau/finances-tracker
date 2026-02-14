@@ -6,6 +6,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { API_BASE } from '@/config/api';
 
 interface TotpSetupProps {
   tempToken: string;
@@ -33,8 +34,6 @@ interface VerifyResponse {
   envVarName: string;
   username: string;
 }
-
-const API_BASE = '/api';
 
 export function TotpSetup({ tempToken, onSuccess, onCancel }: TotpSetupProps) {
   const [setupData, setSetupData] = useState<SetupResponse | null>(null);

@@ -1,8 +1,7 @@
 import type { Category, IncomeEntry, ExpenseEntry, CategoryType } from '@/types';
 import type { Transaction, HistoryFilters } from '@/types/history.types';
 import { db } from './db';
-
-const API_BASE = '/api';
+import { API_BASE } from '@/config/api';
 
 export const api = {
   async fetchCategories(type: CategoryType = 'income'): Promise<Category[]> {

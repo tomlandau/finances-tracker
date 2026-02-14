@@ -1,8 +1,7 @@
 import { createContext, useState, useEffect, ReactNode } from 'react';
 import type { AuthState, LoginResult } from '@/types/auth.types';
 import type { User } from '@/types/user.types';
-
-const API_BASE = '/api';
+import { API_BASE } from '@/config/api';
 
 export const AuthContext = createContext<AuthState | null>(null);
 
