@@ -88,14 +88,19 @@ export async function registerWebAuthnCredential(
   let credential: RegistrationResponseJSON;
   try {
     credential = await startRegistration(options);
+    console.log('✅ startRegistration succeeded, credential:', credential.id);
   } catch (error) {
     // User cancelled or error occurred
+    console.error('❌ startRegistration failed:', error);
+    console.error('Error name:', error instanceof Error ? error.name : 'unknown');
+    console.error('Error message:', error instanceof Error ? error.message : 'unknown');
     throw new Error(
       error instanceof Error ? error.message : 'Registration cancelled or failed'
     );
   }
 
   // Send credential to server for verification
+  console.log('📤 Sending credential to register-verify...');
   const verifyResponse = await fetch(`${API_BASE}/register-verify`, {
     method: 'POST',
     headers: {
@@ -104,6 +109,7 @@ export async function registerWebAuthnCredential(
     credentials: 'include',
     body: JSON.stringify({ challengeToken, credential }),
   });
+  console.log('📥 register-verify response status:', verifyResponse.status);
 
   if (!verifyResponse.ok) {
     const error = await verifyResponse.json();
