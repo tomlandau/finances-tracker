@@ -1,6 +1,6 @@
 import type { VercelResponse } from '@vercel/node';
-import { withAuth, type AuthRequest } from '../lib/middleware/auth';
-import { logSuccess } from '../lib/utils/auditLog';
+import { withAuth, type AuthRequest } from './_lib/middleware/auth';
+import { logSuccess } from './_lib/utils/auditLog';
 
 interface UpdateRequest {
   id: string;

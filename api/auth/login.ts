@@ -7,8 +7,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { withErrorHandler, ApiError } from '../../lib/middleware/errorHandler';
-import { logAuditEvent, getClientIp } from '../../lib/utils/auditLog';
+import { withErrorHandler, ApiError } from '../_lib/middleware/errorHandler';
+import { logAuditEvent, getClientIp } from '../_lib/utils/auditLog';
 
 interface LoginRequest {
   username: string;

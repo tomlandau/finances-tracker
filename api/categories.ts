@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { withAuth, type AuthRequest } from '../lib/middleware/auth';
+import { withAuth, type AuthRequest } from './_lib/middleware/auth';
 
 interface Category {
   id: string;
