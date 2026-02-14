@@ -1,4 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { withAuth, type AuthRequest } from './middleware/auth';
+import { logSuccess, getClientIp } from './utils/auditLog';
 
 interface ExpenseRequest {
   amount: number;
@@ -8,10 +10,10 @@ interface ExpenseRequest {
   isRecurring?: boolean;
 }
 
-export default async function handler(
-  req: VercelRequest,
+export default withAuth(async (
+  req: AuthRequest,
   res: VercelResponse
-) {
+) => {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -50,6 +52,16 @@ export default async function handler(
       ...(isRecurring !== undefined && { [process.env.AIRTABLE_EXPENSE_RECURRING_FIELD!]: isRecurring })
     });
 
+    // Log audit event
+    await logSuccess(
+      req.user!.userId,
+      req.user!.username,
+      'create',
+      'expense',
+      req,
+      { recordId: record.id, amount, categoryId, date }
+    );
+
     return res.status(201).json({
       success: true,
       id: record.id
@@ -61,4 +73,4 @@ export default async function handler(
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
-}
+});

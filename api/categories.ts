@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { withAuth, type AuthRequest } from './middleware/auth';
 
 interface Category {
   id: string;
@@ -6,10 +7,10 @@ interface Category {
   active: boolean;
 }
 
-export default async function handler(
-  req: VercelRequest,
+export default withAuth(async (
+  req: AuthRequest,
   res: VercelResponse
-) {
+) => {
   // Only allow GET requests
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -109,4 +110,4 @@ export default async function handler(
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
-}
+});

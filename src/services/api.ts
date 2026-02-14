@@ -6,7 +6,9 @@ const API_BASE = '/api';
 
 export const api = {
   async fetchCategories(type: CategoryType = 'income'): Promise<Category[]> {
-    const response = await fetch(`${API_BASE}/categories?type=${type}`);
+    const response = await fetch(`${API_BASE}/categories?type=${type}`, {
+      credentials: 'include',
+    });
 
     if (!response.ok) {
       const error = await response.json();
@@ -24,6 +26,7 @@ export const api = {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(entry),
       });
 
@@ -56,6 +59,7 @@ export const api = {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(entry),
       });
 
@@ -96,7 +100,9 @@ export const api = {
       params.append('categoryId', filters.categoryId);
     }
 
-    const response = await fetch(`${API_BASE}/recent?${params.toString()}`);
+    const response = await fetch(`${API_BASE}/recent?${params.toString()}`, {
+      credentials: 'include',
+    });
 
     if (!response.ok) {
       const error = await response.json();
@@ -126,6 +132,7 @@ export const api = {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ id, type, fields }),
       });
 
@@ -158,6 +165,7 @@ export const api = {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ id, type }),
       });
 
