@@ -20,10 +20,11 @@ async function handler(req: AuthRequest, res: Response) {
   // Clear cookies by setting Max-Age to 0
   const isProduction = process.env.NODE_ENV === 'production';
   const domain = isProduction ? undefined : 'localhost';
+  const sameSite = isProduction ? 'None' : 'Strict';
 
   res.setHeader('Set-Cookie', [
-    `accessToken=; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=Strict; Path=/; Max-Age=0; ${domain ? `Domain=${domain}` : ''}`,
-    `refreshToken=; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=Strict; Path=/api/auth/refresh; Max-Age=0; ${domain ? `Domain=${domain}` : ''}`
+    `accessToken=; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/; Max-Age=0; ${domain ? `Domain=${domain}` : ''}`,
+    `refreshToken=; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/api/auth/refresh; Max-Age=0; ${domain ? `Domain=${domain}` : ''}`
   ]);
 
   // Log logout

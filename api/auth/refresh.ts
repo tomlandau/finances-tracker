@@ -66,10 +66,11 @@ async function handler(req: Request, res: Response) {
     // Set new access token cookie
     const isProduction = process.env.NODE_ENV === 'production';
     const domain = isProduction ? undefined : 'localhost';
+    const sameSite = isProduction ? 'None' : 'Strict';
 
     res.setHeader(
       'Set-Cookie',
-      `accessToken=${newAccessToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=Strict; Path=/; Max-Age=${15 * 60}; ${domain ? `Domain=${domain}` : ''}`
+      `accessToken=${newAccessToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/; Max-Age=${15 * 60}; ${domain ? `Domain=${domain}` : ''}`
     );
 
     return res.status(200).json({

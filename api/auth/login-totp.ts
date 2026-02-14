@@ -139,9 +139,13 @@ export default async function handler(
     );
 
     // Set httpOnly cookies
+    const isProduction = process.env.NODE_ENV === 'production';
+    const domain = isProduction ? undefined : 'localhost';
+    const sameSite = isProduction ? 'None' : 'Strict';
+
     res.setHeader('Set-Cookie', [
-      `accessToken=${accessToken}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${15 * 60}`,
-      `refreshToken=${refreshToken}; HttpOnly; SameSite=Strict; Path=/api/auth/refresh; Max-Age=${7 * 24 * 60 * 60}`
+      `accessToken=${accessToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/; Max-Age=${15 * 60}; ${domain ? `Domain=${domain}` : ''}`,
+      `refreshToken=${refreshToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/api/auth/refresh; Max-Age=${7 * 24 * 60 * 60}; ${domain ? `Domain=${domain}` : ''}`
     ]);
 
     // Log successful login

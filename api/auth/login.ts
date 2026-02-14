@@ -69,10 +69,12 @@ function setAuthCookies(res: Response, userId: string, username: string): void {
   // Set httpOnly cookies
   const isProduction = process.env.NODE_ENV === 'production';
   const domain = isProduction ? undefined : 'localhost';
+  // In production (cross-origin), use SameSite=None; in dev use Strict
+  const sameSite = isProduction ? 'None' : 'Strict';
 
   res.setHeader('Set-Cookie', [
-    `accessToken=${accessToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=Strict; Path=/; Max-Age=${15 * 60}; ${domain ? `Domain=${domain}` : ''}`,
-    `refreshToken=${refreshToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=Strict; Path=/api/auth/refresh; Max-Age=${7 * 24 * 60 * 60}; ${domain ? `Domain=${domain}` : ''}`
+    `accessToken=${accessToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/; Max-Age=${15 * 60}; ${domain ? `Domain=${domain}` : ''}`,
+    `refreshToken=${refreshToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/api/auth/refresh; Max-Age=${7 * 24 * 60 * 60}; ${domain ? `Domain=${domain}` : ''}`
   ]);
 }
 
