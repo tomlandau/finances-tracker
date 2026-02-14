@@ -74,13 +74,13 @@ export async function generateRegistrationOptionsForUser(
   // Get existing credentials for this user to prevent duplicate registrations
   const existingCredentials = await getUserCredentials(userId);
 
-  // Convert userId string to Uint8Array as required by @simplewebauthn v11+
-  const userIdBuffer = isoUint8Array.fromUTF8String(userId);
+  // Convert userId string to Uint8Array
+  const userIdUint8 = isoUint8Array.fromUTF8String(userId);
 
   const options = await generateRegistrationOptions({
     rpName,
     rpID,
-    userID: userIdBuffer,
+    userID: userIdUint8,
     userName: username,
     userDisplayName: username,
     // Exclude existing credentials (user can't register same authenticator twice)

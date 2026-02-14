@@ -81,6 +81,9 @@ export async function registerWebAuthnCredential(
     challengeToken: string;
   } = await optionsResponse.json();
 
+  console.log('📋 WebAuthn options received:', options);
+  console.log('📋 options.user:', options.user);
+
   // Start browser registration flow (this will show fingerprint/FaceID prompt)
   let credential: RegistrationResponseJSON;
   try {
