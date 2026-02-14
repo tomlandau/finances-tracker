@@ -248,7 +248,7 @@ export async function verifyAuthenticationAndUpdateCounter(
       expectedRPID: rpID,
       credential: {
         id: credential.credentialID, // Already base64 encoded string
-        publicKey: Buffer.from(credential.publicKey, 'base64'),
+        publicKey: new Uint8Array(Buffer.from(credential.publicKey, 'base64')),
         counter: credential.counter,
       },
       requireUserVerification: true,
