@@ -1,4 +1,54 @@
 {
+  "functions": {
+    "api/categories.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/income.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/expense.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/recent.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/update.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/delete.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/auth/login.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/auth/login-totp.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/auth/logout.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/auth/refresh.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/auth/verify.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/auth/2fa.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
