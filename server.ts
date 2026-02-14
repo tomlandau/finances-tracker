@@ -27,6 +27,15 @@ import webauthnLoginOptionsHandler from './api/auth/webauthn/login-options';
 import webauthnCredentialsHandler from './api/auth/webauthn/credentials';
 import webauthnGenerateTokenHandler from './api/auth/webauthn/generate-token';
 
+// Import scraper endpoints
+import transactionsHandler from './api/transactions';
+import scraperTriggerHandler from './api/scraper-trigger';
+import scraperStatusHandler from './api/scraper-status';
+
+// Import jobs
+import { startDailyScraperJob } from './jobs/daily-scraper';
+import { initTelegramBot } from './lib/utils-telegram';
+
 // Load environment variables (only in development - Railway sets them directly)
 if (process.env.NODE_ENV !== 'production') {
   config({ path: '.env.local' });
@@ -82,6 +91,11 @@ app.post('/api/auth/webauthn/login-options', webauthnLoginOptionsHandler);
 app.all('/api/auth/webauthn/credentials', webauthnCredentialsHandler);
 app.post('/api/auth/webauthn/generate-token', webauthnGenerateTokenHandler);
 
+// Scraper routes
+app.get('/api/transactions', transactionsHandler);
+app.post('/api/scraper/trigger', scraperTriggerHandler);
+app.get('/api/scraper/status', scraperStatusHandler);
+
 // 404 handler
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });
@@ -95,6 +109,21 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
     details: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
+
+// Initialize jobs and services (production only)
+if (process.env.NODE_ENV === 'production') {
+  try {
+    // Initialize Telegram bot
+    initTelegramBot();
+
+    // Start daily scraper cron job
+    startDailyScraperJob();
+
+    console.log('✅ Jobs and services initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize jobs:', error);
+  }
+}
 
 // Start server
 // Bind to 0.0.0.0 to accept connections from outside the container (required for Railway)
