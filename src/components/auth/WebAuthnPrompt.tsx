@@ -4,18 +4,16 @@
  */
 
 import { useState, useEffect } from 'react';
-import {
-  authenticateWithWebAuthn,
-  getWebAuthnErrorMessage,
-} from '@/services/webauthn';
+import { getWebAuthnErrorMessage } from '@/services/webauthn';
 import { Fingerprint, AlertCircle, Loader2 } from 'lucide-react';
 
 interface WebAuthnPromptProps {
   tempToken: string;
   username: string;
-  onSuccess: (user: { id: string; username: string; has2FA: boolean; hasWebAuthn: boolean }) => void;
+  onSuccess: () => void;
   onCancel: () => void;
   onUseTotpInstead: () => void;
+  loginWithWebAuthn: (tempToken: string) => Promise<boolean>;
 }
 
 export function WebAuthnPrompt({
@@ -24,6 +22,7 @@ export function WebAuthnPrompt({
   onSuccess,
   onCancel,
   onUseTotpInstead,
+  loginWithWebAuthn,
 }: WebAuthnPromptProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +41,9 @@ export function WebAuthnPrompt({
     setError(null);
 
     try {
-      const user = await authenticateWithWebAuthn(tempToken);
-      onSuccess(user);
+      await loginWithWebAuthn(tempToken);
+      // loginWithWebAuthn updates AuthContext, which will trigger re-render
+      onSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? getWebAuthnErrorMessage(err) : 'שגיאה באימות';
       setError(errorMessage);

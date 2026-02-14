@@ -77,10 +77,9 @@ export function LoginForm() {
     setLoginMethod(null);
   };
 
-  const handleWebAuthnSuccess = (user: any) => {
-    // After successful WebAuthn login, the user is set in AuthContext
-    // Nothing else needed here
-    console.log('WebAuthn login successful:', user);
+  const handleWebAuthnSuccess = () => {
+    // After successful WebAuthn login, the AuthContext will update isAuthenticated
+    // and the App component will show the main app
   };
 
   // Show 2FA setup flow if required
@@ -158,6 +157,7 @@ export function LoginForm() {
           onSuccess={handleWebAuthnSuccess}
           onCancel={handleCancel}
           onUseTotpInstead={() => setLoginMethod('totp')}
+          loginWithWebAuthn={loginWithWebAuthn}
         />
       );
     }
