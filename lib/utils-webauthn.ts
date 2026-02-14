@@ -24,7 +24,7 @@ import Airtable from 'airtable';
  */
 export interface StoredCredential {
   id: string; // Airtable record ID
-  credentialID: string; // Base64 encoded credential ID
+  credentialID: string; // Base64url encoded credential ID (WebAuthn standard)
   userId: string;
   username: string;
   publicKey: string; // Base64 encoded public key
@@ -85,7 +85,7 @@ export async function generateRegistrationOptionsForUser(
     userDisplayName: username,
     // Exclude existing credentials (user can't register same authenticator twice)
     excludeCredentials: existingCredentials.map(cred => ({
-      id: cred.credentialID, // Already base64 encoded string
+      id: cred.credentialID, // Already base64url encoded string
       type: 'public-key',
       transports: cred.transports ? JSON.parse(cred.transports) : undefined,
     })),
@@ -147,7 +147,6 @@ export async function verifyAndStoreRegistration(
   } = registrationInfo;
 
   const {
-    id: credentialID,
     publicKey: credentialPublicKey,
     counter,
   } = credential;
@@ -155,8 +154,9 @@ export async function verifyAndStoreRegistration(
   // Store credential in Airtable
   const table = getCredentialsTable();
 
-  // Encode binary data to base64 for storage
-  const credentialIDBase64 = Buffer.from(credentialID).toString('base64');
+  // Use the credential ID from the response (already base64url encoded by the browser)
+  // This is safer than re-encoding from Uint8Array
+  const credentialIDBase64URL = response.id;
   const publicKeyBase64 = Buffer.from(credentialPublicKey).toString('base64');
   const aaguidString = aaguid ? Buffer.from(aaguid).toString('hex') : '';
 
@@ -164,7 +164,7 @@ export async function verifyAndStoreRegistration(
   const transports = response.response.transports || [];
 
   const record = await table.create({
-    'Credential ID': credentialIDBase64,
+    'Credential ID': credentialIDBase64URL,
     'User ID': userId,
     'Username': username,
     'Public Key': publicKeyBase64,
@@ -177,7 +177,7 @@ export async function verifyAndStoreRegistration(
 
   return {
     id: record.id,
-    credentialID: credentialIDBase64,
+    credentialID: credentialIDBase64URL,
     userId,
     username,
     publicKey: publicKeyBase64,
@@ -208,7 +208,7 @@ export async function generateAuthenticationOptionsForUser(
     // If not, allow any credential (for discoverable/resident keys)
     allowCredentials: credentials.length > 0
       ? credentials.map(cred => ({
-          id: cred.credentialID, // Already base64 encoded string
+          id: cred.credentialID, // Already base64url encoded string
           type: 'public-key',
           transports: cred.transports ? JSON.parse(cred.transports) : undefined,
         }))
@@ -247,7 +247,7 @@ export async function verifyAuthenticationAndUpdateCounter(
       expectedOrigin: origin,
       expectedRPID: rpID,
       credential: {
-        id: credential.credentialID, // Already base64 encoded string
+        id: credential.credentialID, // Already base64url encoded string
         publicKey: new Uint8Array(Buffer.from(credential.publicKey, 'base64')),
         counter: credential.counter,
       },
@@ -318,7 +318,7 @@ export async function getUserCredentials(userId: string): Promise<StoredCredenti
  * Get a specific credential by credential ID and user ID
  *
  * @param userId - User's unique ID
- * @param credentialId - Base64 encoded credential ID
+ * @param credentialId - Base64url encoded credential ID
  * @returns Stored credential or null
  */
 export async function getCredentialById(
