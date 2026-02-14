@@ -1,0 +1,9 @@
+# Ignore backend code - now deployed on Railway
+api/
+lib/
+server.ts
+tsconfig.server.json
+railway.toml
+.env.local
+
+# Keep only frontend code for Vercel static hosting
