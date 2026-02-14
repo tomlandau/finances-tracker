@@ -6,10 +6,10 @@
 
 import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import type { RegistrationResponseJSON } from '@simplewebauthn/types';
+import type { RegistrationResponseJSON } from '@simplewebauthn/server';
 import { withErrorHandler, ApiError } from '../../../lib/middleware-error';
 import { verifyAndStoreRegistration } from '../../../lib/utils-webauthn';
-import { logSuccess, logFailure, getClientIp } from '../../../lib/utils-audit';
+import { logSuccess, logFailure } from '../../../lib/utils-audit';
 
 interface RegisterVerifyRequest {
   challengeToken: string;

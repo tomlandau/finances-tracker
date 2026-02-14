@@ -11,14 +11,12 @@ import {
   verifyAuthenticationResponse,
   type VerifiedRegistrationResponse,
   type VerifiedAuthenticationResponse,
+  type PublicKeyCredentialCreationOptionsJSON,
+  type PublicKeyCredentialRequestOptionsJSON,
+  type RegistrationResponseJSON,
+  type AuthenticationResponseJSON,
 } from '@simplewebauthn/server';
 import { isoUint8Array } from '@simplewebauthn/server/helpers';
-import type {
-  PublicKeyCredentialCreationOptionsJSON,
-  PublicKeyCredentialRequestOptionsJSON,
-  RegistrationResponseJSON,
-  AuthenticationResponseJSON,
-} from '@simplewebauthn/types';
 import Airtable from 'airtable';
 
 /**
@@ -248,9 +246,9 @@ export async function verifyAuthenticationAndUpdateCounter(
       expectedChallenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
-      authenticator: {
-        credentialID: Buffer.from(credential.credentialID, 'base64'),
-        credentialPublicKey: Buffer.from(credential.publicKey, 'base64'),
+      credential: {
+        id: Buffer.from(credential.credentialID, 'base64'),
+        publicKey: Buffer.from(credential.publicKey, 'base64'),
         counter: credential.counter,
       },
       requireUserVerification: true,

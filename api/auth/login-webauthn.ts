@@ -6,10 +6,10 @@
 
 import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import type { AuthenticationResponseJSON } from '@simplewebauthn/types';
+import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { withErrorHandler, ApiError } from '../../lib/middleware-error';
 import { verifyAuthenticationAndUpdateCounter } from '../../lib/utils-webauthn';
-import { logSuccess, logFailure, getClientIp } from '../../lib/utils-audit';
+import { logSuccess, logFailure } from '../../lib/utils-audit';
 
 interface LoginWebAuthnRequest {
   challengeToken: string;

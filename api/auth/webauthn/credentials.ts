@@ -4,7 +4,7 @@
  * Used to show user their registered devices and allow deletion
  */
 
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { withAuth, type AuthRequest } from '../../../lib/middleware-auth';
 import { withErrorHandler } from '../../../lib/middleware-error';
 import { getUserCredentials, deleteCredential } from '../../../lib/utils-webauthn';

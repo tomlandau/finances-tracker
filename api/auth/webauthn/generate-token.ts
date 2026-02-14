@@ -3,7 +3,7 @@
  * Creates a temp token for adding WebAuthn from settings
  */
 
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { withAuth, type AuthRequest } from '../../../lib/middleware-auth';
 import { withErrorHandler } from '../../../lib/middleware-error';
