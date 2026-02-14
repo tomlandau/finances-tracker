@@ -1,6 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { withAuth, type AuthRequest } from './middleware/auth';
-import { logSuccess, getClientIp } from './utils/auditLog';
+import type { VercelResponse } from '@vercel/node';
+import { withAuth, type AuthRequest } from '../lib/middleware/auth';
+import { logSuccess } from '../lib/utils/auditLog';
 
 interface DeleteRequest {
   id: string;

@@ -6,7 +6,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import { parse } from 'cookie';
-import { withErrorHandler, ApiError } from '../middleware/errorHandler';
+import { withErrorHandler, ApiError } from '../../lib/middleware/errorHandler';
 
 /**
  * Gets username from user ID

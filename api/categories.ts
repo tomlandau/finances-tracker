@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { withAuth, type AuthRequest } from './middleware/auth';
+import { withAuth, type AuthRequest } from '../lib/middleware/auth';
 
 interface Category {
   id: string;
@@ -48,7 +48,7 @@ export default withAuth(async (
       : process.env.AIRTABLE_EXPENSE_CATEGORY_STATUS_FIELD!;
 
     // Lookup field names based on type
-    let ownerField, domainField, businessHomeField, expenseTypeField, renewalDateField;
+    let ownerField: string | undefined, domainField: string | undefined, businessHomeField: string | undefined, expenseTypeField: string | undefined, renewalDateField: string | undefined;
 
     if (type === 'income') {
       ownerField = process.env.AIRTABLE_CATEGORY_OWNER_FIELD;
