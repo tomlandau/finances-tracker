@@ -7,15 +7,14 @@ import {
   startRegistration,
   startAuthentication,
   browserSupportsWebAuthn,
+  type PublicKeyCredentialCreationOptionsJSON,
+  type PublicKeyCredentialRequestOptionsJSON,
+  type RegistrationResponseJSON,
+  type AuthenticationResponseJSON,
 } from '@simplewebauthn/browser';
-import type {
-  PublicKeyCredentialCreationOptionsJSON,
-  PublicKeyCredentialRequestOptionsJSON,
-  RegistrationResponseJSON,
-  AuthenticationResponseJSON,
-} from '@simplewebauthn/types';
 
-const API_BASE = '/api/auth/webauthn';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = `${API_URL}/auth/webauthn`;
 
 export interface WebAuthnCredential {
   id: string;
