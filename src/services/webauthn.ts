@@ -129,11 +129,14 @@ export async function registerWebAuthnCredential(
 export async function authenticateWithWebAuthn(
   tempToken: string
 ): Promise<{ id: string; username: string; has2FA: boolean; hasWebAuthn: boolean }> {
+  console.log('🔐 [1/5] Starting WebAuthn authentication...');
+
   if (!browserSupportsWebAuthn()) {
     throw new Error('WebAuthn is not supported in this browser');
   }
 
   // Get authentication options from server
+  console.log('🔐 [2/5] Fetching login options from server...');
   const optionsResponse = await fetch(`${API_BASE}/login-options`, {
     method: 'POST',
     headers: {
@@ -143,8 +146,11 @@ export async function authenticateWithWebAuthn(
     body: JSON.stringify({ tempToken }),
   });
 
+  console.log('🔐 [2/5] Login options response status:', optionsResponse.status);
+
   if (!optionsResponse.ok) {
     const error = await optionsResponse.json();
+    console.error('❌ Failed to get options:', error);
     throw new Error(error.error || 'Failed to get authentication options');
   }
 
@@ -153,18 +159,23 @@ export async function authenticateWithWebAuthn(
     challengeToken: string;
   } = await optionsResponse.json();
 
+  console.log('🔐 [3/5] Starting browser authentication (fingerprint prompt)...');
+
   // Start browser authentication flow (this will show fingerprint/FaceID prompt)
   let credential: AuthenticationResponseJSON;
   try {
     credential = await startAuthentication(options);
+    console.log('✅ [3/5] Browser authentication succeeded');
   } catch (error) {
     // User cancelled or error occurred
+    console.error('❌ Browser authentication failed:', error);
     throw new Error(
       error instanceof Error ? error.message : 'Authentication cancelled or failed'
     );
   }
 
   // Send credential to server for verification and login
+  console.log('🔐 [4/5] Sending credential to server for verification...');
   const loginResponse = await fetch(`${API_URL}/auth/login-webauthn`, {
     method: 'POST',
     headers: {
@@ -174,12 +185,24 @@ export async function authenticateWithWebAuthn(
     body: JSON.stringify({ challengeToken, credential }),
   });
 
+  console.log('🔐 [4/5] Server response status:', loginResponse.status);
+
   if (!loginResponse.ok) {
     const error = await loginResponse.json();
+    console.error('❌ Server verification failed:', error);
     throw new Error(error.error || 'Authentication failed');
   }
 
+  console.log('🔐 [5/5] Parsing response...');
   const result = await loginResponse.json();
+  console.log('✅ [5/5] Response parsed:', result);
+
+  if (!result.user) {
+    console.error('❌ No user in response:', result);
+    throw new Error('Invalid response from server - no user data');
+  }
+
+  console.log('✅ Authentication complete! User:', result.user.username);
   return result.user;
 }
 
