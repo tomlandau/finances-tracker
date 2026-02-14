@@ -156,7 +156,7 @@ export async function authenticateWithWebAuthn(
   }
 
   // Send credential to server for verification and login
-  const loginResponse = await fetch('/api/auth/login-webauthn', {
+  const loginResponse = await fetch(`${API_URL}/auth/login-webauthn`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
