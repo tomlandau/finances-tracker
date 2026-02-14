@@ -1,6 +1,6 @@
 import type { VercelResponse } from '@vercel/node';
-import { withAuth, type AuthRequest } from './middleware-auth';
-import { logSuccess } from './utils-audit';
+import { withAuth, type AuthRequest } from './lib/middleware-auth';
+import { logSuccess } from './lib/utils-audit';
 
 interface ExpenseRequest {
   amount: number;
