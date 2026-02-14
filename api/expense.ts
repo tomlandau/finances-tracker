@@ -1,6 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelResponse } from '@vercel/node';
 import { withAuth, type AuthRequest } from './middleware/auth';
-import { logSuccess, getClientIp } from './utils/auditLog';
+import { logSuccess } from './utils/auditLog';
 
 interface ExpenseRequest {
   amount: number;

@@ -51,7 +51,7 @@ export function TotpSetup({ tempToken, onSuccess, onCancel }: TotpSetupProps) {
 
   const fetchSetupData = async () => {
     try {
-      const response = await fetch(`${API_BASE}/auth/2fa/setup`, {
+      const response = await fetch(`${API_BASE}/auth/2fa?action=setup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ export function TotpSetup({ tempToken, onSuccess, onCancel }: TotpSetupProps) {
     setIsVerifying(true);
 
     try {
-      const response = await fetch(`${API_BASE}/auth/2fa/verify-setup`, {
+      const response = await fetch(`${API_BASE}/auth/2fa?action=verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

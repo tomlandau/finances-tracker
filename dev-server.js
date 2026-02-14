@@ -989,7 +989,26 @@ const authVerifyHandler = async (req, res) => {
 // 2FA Endpoints
 // ============================================
 
-const auth2faSetupHandler = async (req, res) => {
+const auth2faHandler = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const action = req.query.action;
+
+  if (action === 'setup') {
+    return handleAuth2faSetup(req, res);
+  } else if (action === 'verify') {
+    return handleAuth2faVerifySetup(req, res);
+  } else {
+    return res.status(400).json({
+      error: 'Invalid action',
+      details: 'Use ?action=setup or ?action=verify'
+    });
+  }
+};
+
+const handleAuth2faSetup = async (req, res) => {
   try {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
@@ -1040,7 +1059,7 @@ const auth2faSetupHandler = async (req, res) => {
   }
 };
 
-const auth2faVerifySetupHandler = async (req, res) => {
+const handleAuth2faVerifySetup = async (req, res) => {
   try {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
@@ -1226,8 +1245,7 @@ app.post('/api/auth/refresh', authRefreshHandler);
 app.get('/api/auth/verify', authVerifyHandler);
 
 // 2FA routes
-app.post('/api/auth/2fa/setup', auth2faSetupHandler);
-app.post('/api/auth/2fa/verify-setup', auth2faVerifySetupHandler);
+app.post('/api/auth/2fa', auth2faHandler);
 app.post('/api/auth/login-totp', authLoginTotpHandler);
 
 const PORT = 3001;

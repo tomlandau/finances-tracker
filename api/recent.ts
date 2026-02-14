@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelResponse } from '@vercel/node';
 import { withAuth, type AuthRequest } from './middleware/auth';
 
 interface Transaction {
@@ -51,7 +51,7 @@ export default withAuth(async (
     const buildFilterFormula = (
       dateField: string,
       categoryField: string,
-      categoryLookupField: string
+      _categoryLookupField: string
     ): string => {
       const conditions: string[] = [];
 
