@@ -5,8 +5,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
-import { verifyTotpCode } from '../lib/utils-totp';
-import { logSuccess, logFailure } from '../lib/utils-audit';
+import { verifyTotpCode } from '../../lib/utils-totp';
+import { logSuccess, logFailure } from '../../lib/utils-audit';
 
 interface LoginTotpRequest {
   tempToken: string;

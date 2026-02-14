@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/**/*.ts": {
-      "excludeFiles": "api/lib/**"
+      "includeFiles": "lib/**"
     }
   },
   "rewrites": [

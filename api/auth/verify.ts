@@ -5,8 +5,8 @@
  */
 
 import type { VercelResponse } from '@vercel/node';
-import { withAuth, AuthRequest } from '../lib/middleware-auth';
-import { withErrorHandler, ApiError } from '../lib/middleware-error';
+import { withAuth, AuthRequest } from '../../lib/middleware-auth';
+import { withErrorHandler, ApiError } from '../../lib/middleware-error';
 
 /**
  * Checks if user has 2FA enabled
