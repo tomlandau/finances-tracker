@@ -6,7 +6,7 @@
  * POST /api/auth/2fa?action=verify - Verify setup completion
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { generateTotpSecret, generateQRCode, verifyTotpCode } from '../../lib/utils-totp';
 
@@ -29,8 +29,8 @@ interface VerifySetupRequest {
 }
 
 export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
+  req: Request,
+  res: Response
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -53,7 +53,7 @@ export default async function handler(
 /**
  * Handle 2FA setup - generate QR code
  */
-async function handleSetup(req: VercelRequest, res: VercelResponse) {
+async function handleSetup(req: Request, res: Response) {
   try {
     const { tempToken } = req.body as SetupRequest;
 
@@ -118,7 +118,7 @@ async function handleSetup(req: VercelRequest, res: VercelResponse) {
 /**
  * Handle 2FA setup verification
  */
-async function handleVerifySetup(req: VercelRequest, res: VercelResponse) {
+async function handleVerifySetup(req: Request, res: Response) {
   try {
     const { tempToken, totpCode, secret } = req.body as VerifySetupRequest;
 

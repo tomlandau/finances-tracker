@@ -3,14 +3,14 @@
  * JWT verification middleware for protecting API endpoints
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { parse } from 'cookie';
 
 /**
  * Extended request type with user information
  */
-export interface AuthRequest extends VercelRequest {
+export interface AuthRequest extends Request {
   user?: {
     userId: string;
     username: string;
@@ -26,15 +26,15 @@ export interface AuthRequest extends VercelRequest {
  * @example
  * ```typescript
  * export default withAuth(async (req, res) => {
- *   const { userId, username } = req.user!;
+ *   const { userId, username} = req.user!;
  *   // ... your endpoint logic
  * });
  * ```
  */
 export function withAuth(
-  handler: (req: AuthRequest, res: VercelResponse) => Promise<void | VercelResponse>
+  handler: (req: AuthRequest, res: Response) => Promise<void | Response>
 ) {
-  return async (req: AuthRequest, res: VercelResponse) => {
+  return async (req: AuthRequest, res: Response) => {
     try {
       // Extract token from cookie
       const cookies = parse(req.headers.cookie || '');

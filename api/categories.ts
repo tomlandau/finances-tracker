@@ -1,4 +1,4 @@
-import type { VercelResponse } from '@vercel/node';
+import type { Response } from 'express';
 import { withAuth, type AuthRequest } from '../lib/middleware-auth';
 
 interface Category {
@@ -9,7 +9,7 @@ interface Category {
 
 export default withAuth(async (
   req: AuthRequest,
-  res: VercelResponse
+  res: Response
 ) => {
   // Only allow GET requests
   if (req.method !== 'GET') {

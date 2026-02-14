@@ -1,4 +1,4 @@
-import type { VercelResponse } from '@vercel/node';
+import type { Response } from 'express';
 import { withAuth, type AuthRequest } from '../lib/middleware-auth';
 import { logSuccess } from '../lib/utils-audit';
 
@@ -18,7 +18,7 @@ interface UpdateRequest {
 
 export default withAuth(async (
   req: AuthRequest,
-  res: VercelResponse
+  res: Response
 ) => {
   // Only allow POST requests
   if (req.method !== 'POST') {

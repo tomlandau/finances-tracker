@@ -4,7 +4,7 @@
  */
 
 import Airtable from 'airtable';
-import type { VercelRequest } from '@vercel/node';
+import type { Request } from 'express';
 
 /**
  * Action types that can be logged
@@ -35,7 +35,7 @@ export interface AuditEvent {
  * @param req - Vercel request object
  * @returns Client IP address or 'unknown'
  */
-export function getClientIp(req: VercelRequest): string {
+export function getClientIp(req: Request): string {
   // Check Vercel/proxy headers first
   const forwardedFor = req.headers['x-forwarded-for'];
   if (forwardedFor) {
@@ -121,7 +121,7 @@ export async function logSuccess(
   username: string,
   action: AuditAction,
   resource: AuditResource,
-  req: VercelRequest,
+  req: Request,
   details?: string | object
 ): Promise<void> {
   await logAuditEvent({
@@ -143,7 +143,7 @@ export async function logFailure(
   username: string,
   action: AuditAction,
   resource: AuditResource,
-  req: VercelRequest,
+  req: Request,
   details?: string | object
 ): Promise<void> {
   await logAuditEvent({

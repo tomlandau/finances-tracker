@@ -4,7 +4,7 @@
  * Returns temp token if 2FA is required, otherwise returns JWT tokens
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { withErrorHandler, ApiError } from '../../lib/middleware-error';
@@ -48,7 +48,7 @@ function getUserByUsername(username: string): UserConfig | null {
 /**
  * Creates JWT tokens and sets them as httpOnly cookies
  */
-function setAuthCookies(res: VercelResponse, userId: string, username: string): void {
+function setAuthCookies(res: Response, userId: string, username: string): void {
   const JWT_SECRET = process.env.JWT_SECRET!;
   const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 
@@ -76,7 +76,7 @@ function setAuthCookies(res: VercelResponse, userId: string, username: string): 
   ]);
 }
 
-async function handler(req: VercelRequest, res: VercelResponse) {
+async function handler(req: Request, res: Response) {
   // Only POST allowed
   if (req.method !== 'POST') {
     throw new ApiError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');

@@ -3,12 +3,12 @@
  * Clears authentication cookies and logs the logout event
  */
 
-import type { VercelResponse } from '@vercel/node';
+import type { Response } from 'express';
 import { withAuth, AuthRequest } from '../../lib/middleware-auth';
 import { withErrorHandler, ApiError } from '../../lib/middleware-error';
 import { logAuditEvent, getClientIp } from '../../lib/utils-audit';
 
-async function handler(req: AuthRequest, res: VercelResponse) {
+async function handler(req: AuthRequest, res: Response) {
   // Only POST allowed
   if (req.method !== 'POST') {
     throw new ApiError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');

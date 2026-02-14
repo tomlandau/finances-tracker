@@ -3,7 +3,7 @@
  * Refreshes access token using refresh token
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { parse } from 'cookie';
 import { withErrorHandler, ApiError } from '../../lib/middleware-error';
@@ -21,7 +21,7 @@ function getUsernameById(userId: string): string {
   return 'unknown';
 }
 
-async function handler(req: VercelRequest, res: VercelResponse) {
+async function handler(req: Request, res: Response) {
   // Only POST allowed
   if (req.method !== 'POST') {
     throw new ApiError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');

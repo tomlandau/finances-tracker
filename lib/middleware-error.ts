@@ -3,7 +3,7 @@
  * Centralized error handling for consistent API responses
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { Request, Response } from 'express';
 
 export class ApiError extends Error {
   constructor(
@@ -42,9 +42,9 @@ export interface ErrorResponse {
  * ```
  */
 export function withErrorHandler(
-  handler: (req: VercelRequest, res: VercelResponse) => Promise<void | VercelResponse>
+  handler: (req: Request, res: Response) => Promise<void | Response>
 ) {
-  return async (req: VercelRequest, res: VercelResponse) => {
+  return async (req: Request, res: Response) => {
     try {
       return await handler(req, res);
     } catch (error) {
@@ -82,8 +82,8 @@ export function withErrorHandler(
  * ```
  */
 export function withAuthAndErrorHandler(
-  handler: (req: any, res: VercelResponse) => Promise<void | VercelResponse>
+  handler: (req: any, res: Response) => Promise<void | Response>
 ) {
-  const { withAuth } = require('./auth');
+  const { withAuth } = require('./middleware-auth');
   return withErrorHandler(withAuth(handler));
 }

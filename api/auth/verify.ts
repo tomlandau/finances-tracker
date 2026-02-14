@@ -4,7 +4,7 @@
  * Used for initial page load to check if user is authenticated
  */
 
-import type { VercelResponse } from '@vercel/node';
+import type { Response } from 'express';
 import { withAuth, AuthRequest } from '../../lib/middleware-auth';
 import { withErrorHandler, ApiError } from '../../lib/middleware-error';
 
@@ -21,7 +21,7 @@ function getUserHas2FA(userId: string): boolean {
   return false;
 }
 
-async function handler(req: AuthRequest, res: VercelResponse) {
+async function handler(req: AuthRequest, res: Response) {
   // Only GET allowed
   if (req.method !== 'GET') {
     throw new ApiError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');
