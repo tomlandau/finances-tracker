@@ -32,9 +32,16 @@ import transactionsHandler from './api/transactions';
 import scraperTriggerHandler from './api/scraper-trigger';
 import scraperStatusHandler from './api/scraper-status';
 
+// Import classification endpoints (Phase 2)
+import pendingTransactionsHandler from './api/transactions/pending';
+import classifyTransactionHandler from './api/transactions/classify';
+import classificationRulesHandler from './api/classification-rules/index';
+
 // Import jobs
 import { startDailyScraperJob } from './jobs/daily-scraper';
+import { startClassifierWorker } from './jobs/classifier-worker';
 import { initTelegramBot } from './lib/utils-telegram';
+import { initTelegramBotPolling } from './telegram/bot';
 
 // Load environment variables (only in development - Railway sets them directly)
 if (process.env.NODE_ENV !== 'production') {
@@ -96,6 +103,11 @@ app.get('/api/transactions', transactionsHandler);
 app.post('/api/scraper/trigger', scraperTriggerHandler);
 app.get('/api/scraper/status', scraperStatusHandler);
 
+// Classification routes (Phase 2)
+app.get('/api/transactions/pending', pendingTransactionsHandler);
+app.post('/api/transactions/classify', classifyTransactionHandler);
+app.all('/api/classification-rules', classificationRulesHandler);
+
 // 404 handler
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });
@@ -113,11 +125,17 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 // Initialize jobs and services (production only)
 if (process.env.NODE_ENV === 'production') {
   try {
-    // Initialize Telegram bot
+    // Initialize Telegram notification bot (polling off)
     initTelegramBot();
 
-    // Start daily scraper cron job
+    // Initialize Telegram interactive bot (polling on) - Phase 2
+    initTelegramBotPolling();
+
+    // Start daily scraper cron job (04:00 UTC)
     startDailyScraperJob();
+
+    // Start classifier worker cron job (hourly) - Phase 2
+    startClassifierWorker();
 
     console.log('✅ Jobs and services initialized');
   } catch (error) {

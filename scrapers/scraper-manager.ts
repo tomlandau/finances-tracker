@@ -13,6 +13,27 @@ export class ScraperManager {
   private credentialsManager: CredentialsManager;
   private base: any;
 
+  // Table names
+  private readonly TRANSACTIONS_TABLE = process.env.AIRTABLE_TRANSACTIONS_TABLE || 'תנועות';
+  private readonly ACCOUNTS_TABLE = process.env.AIRTABLE_ACCOUNTS_TABLE || 'חשבונות';
+
+  // Transactions table fields
+  private readonly TX_HASH_FIELD = process.env.AIRTABLE_TRANSACTION_HASH_FIELD || 'TransactionHash';
+  private readonly TX_DATE_FIELD = process.env.AIRTABLE_TRANSACTION_DATE_FIELD || 'תאריך';
+  private readonly TX_AMOUNT_FIELD = process.env.AIRTABLE_TRANSACTION_AMOUNT_FIELD || 'סכום';
+  private readonly TX_DESCRIPTION_FIELD = process.env.AIRTABLE_TRANSACTION_DESCRIPTION_FIELD || 'תיאור';
+  private readonly TX_SOURCE_FIELD = process.env.AIRTABLE_TRANSACTION_SOURCE_FIELD || 'מקור';
+  private readonly TX_STATUS_FIELD = process.env.AIRTABLE_TRANSACTION_STATUS_FIELD || 'סטטוס';
+  private readonly TX_USER_ID_FIELD = process.env.AIRTABLE_TRANSACTION_USER_ID_FIELD || 'מזהה משתמש';
+
+  // Accounts table fields
+  private readonly ACC_NAME_FIELD = process.env.AIRTABLE_ACCOUNT_NAME_FIELD || 'שם';
+  private readonly ACC_TYPE_FIELD = process.env.AIRTABLE_ACCOUNT_TYPE_FIELD || 'סוג';
+  private readonly ACC_USER_ID_FIELD = process.env.AIRTABLE_ACCOUNT_USER_ID_FIELD || 'מזהה משתמש';
+  private readonly ACC_ACTIVE_FIELD = process.env.AIRTABLE_ACCOUNT_ACTIVE_FIELD || 'פעיל';
+  private readonly ACC_LAST_BALANCE_FIELD = process.env.AIRTABLE_ACCOUNT_LAST_BALANCE_FIELD || 'יתרה אחרונה';
+  private readonly ACC_LAST_SCRAPED_FIELD = process.env.AIRTABLE_ACCOUNT_LAST_SCRAPED_FIELD || 'סקרייפינג אחרון';
+
   constructor() {
     this.credentialsManager = new CredentialsManager();
 
@@ -213,15 +234,15 @@ export class ScraperManager {
     const hashes = transactions.map(t => t.hash);
 
     // שאילתה ל-Airtable - בדיקת אילו hashes כבר קיימים
-    const existingRecords = await this.base('תנועות')
+    const existingRecords = await this.base(this.TRANSACTIONS_TABLE)
       .select({
-        filterByFormula: `OR(${hashes.map(h => `{TransactionHash} = '${h}'`).join(', ')})`,
-        fields: ['TransactionHash']
+        filterByFormula: `OR(${hashes.map(h => `{${this.TX_HASH_FIELD}} = '${h}'`).join(', ')})`,
+        fields: [this.TX_HASH_FIELD]
       })
       .all();
 
     const existingHashes = new Set(
-      existingRecords.map((r: any) => r.get('TransactionHash'))
+      existingRecords.map((r: any) => r.get(this.TX_HASH_FIELD))
     );
 
     // סינון רק תנועות שלא קיימות
@@ -240,17 +261,17 @@ export class ScraperManager {
 
       const records = await Promise.all(batch.map(async txn => ({
         fields: {
-          'TransactionHash': txn.hash,
-          'תאריך': txn.date,
-          'סכום': txn.amount,
-          'תיאור': txn.description,
-          'מקור': [await this.getAccountRecordId(txn.source)], // Link field
-          'סטטוס': 'ממתין לסיווג',
-          'מזהה משתמש': txn.userId
+          [this.TX_HASH_FIELD]: txn.hash,
+          [this.TX_DATE_FIELD]: txn.date,
+          [this.TX_AMOUNT_FIELD]: txn.amount,
+          [this.TX_DESCRIPTION_FIELD]: txn.description,
+          [this.TX_SOURCE_FIELD]: [await this.getAccountRecordId(txn.source)], // Link field
+          [this.TX_STATUS_FIELD]: 'ממתין לסיווג',
+          [this.TX_USER_ID_FIELD]: txn.userId
         }
       })));
 
-      await this.base('תנועות').create(records);
+      await this.base(this.TRANSACTIONS_TABLE).create(records);
     }
 
     console.log(`  💾 Inserted ${transactions.length} transactions to Airtable`);
@@ -260,9 +281,9 @@ export class ScraperManager {
    * קבלת Record ID של חשבון מטבלת חשבונות (לצורך קישור)
    */
   private async getAccountRecordId(accountName: string): Promise<string> {
-    const records = await this.base('חשבונות')
+    const records = await this.base(this.ACCOUNTS_TABLE)
       .select({
-        filterByFormula: `{שם} = '${accountName}'`,
+        filterByFormula: `{${this.ACC_NAME_FIELD}} = '${accountName}'`,
         maxRecords: 1
       })
       .firstPage();
@@ -283,11 +304,11 @@ export class ScraperManager {
     const type = accountName.includes('Discount') ? 'חשבון בנק' : 'כרטיס אשראי';
     const userId = accountName.includes('Tom') ? 'usr_tom_001' : 'usr_yael_001';
 
-    const record = await this.base('חשבונות').create({
-      'שם': accountName,
-      'סוג': type,
-      'מזהה משתמש': userId,
-      'פעיל': true
+    const record = await this.base(this.ACCOUNTS_TABLE).create({
+      [this.ACC_NAME_FIELD]: accountName,
+      [this.ACC_TYPE_FIELD]: type,
+      [this.ACC_USER_ID_FIELD]: userId,
+      [this.ACC_ACTIVE_FIELD]: true
     });
 
     console.log(`  ✨ Created new account: ${accountName}`);
@@ -302,30 +323,30 @@ export class ScraperManager {
     balance: number | undefined,
     userId: string
   ): Promise<void> {
-    const records = await this.base('חשבונות')
+    const records = await this.base(this.ACCOUNTS_TABLE)
       .select({
-        filterByFormula: `{שם} = '${accountName}'`,
+        filterByFormula: `{${this.ACC_NAME_FIELD}} = '${accountName}'`,
         maxRecords: 1
       })
       .firstPage();
 
     const updateData: any = {
-      'סקרייפינג אחרון': format(new Date(), 'yyyy-MM-dd')
+      [this.ACC_LAST_SCRAPED_FIELD]: format(new Date(), 'yyyy-MM-dd')
     };
 
     if (balance !== undefined) {
-      updateData['יתרה אחרונה'] = balance;
+      updateData[this.ACC_LAST_BALANCE_FIELD] = balance;
     }
 
     if (records.length > 0) {
-      await this.base('חשבונות').update(records[0].id, updateData);
+      await this.base(this.ACCOUNTS_TABLE).update(records[0].id, updateData);
     } else {
       // יצירת חשבון חדש
-      await this.base('חשבונות').create({
-        'שם': accountName,
-        'סוג': accountName.includes('Discount') ? 'חשבון בנק' : 'כרטיס אשראי',
-        'מזהה משתמש': userId,
-        'פעיל': true,
+      await this.base(this.ACCOUNTS_TABLE).create({
+        [this.ACC_NAME_FIELD]: accountName,
+        [this.ACC_TYPE_FIELD]: accountName.includes('Discount') ? 'חשבון בנק' : 'כרטיס אשראי',
+        [this.ACC_USER_ID_FIELD]: userId,
+        [this.ACC_ACTIVE_FIELD]: true,
         ...updateData
       });
     }
@@ -336,16 +357,16 @@ export class ScraperManager {
    */
   private async getLastScrapedDate(accountName: string): Promise<Date> {
     try {
-      const records = await this.base('חשבונות')
+      const records = await this.base(this.ACCOUNTS_TABLE)
         .select({
-          filterByFormula: `{שם} = '${accountName}'`,
+          filterByFormula: `{${this.ACC_NAME_FIELD}} = '${accountName}'`,
           maxRecords: 1,
-          fields: ['סקרייפינג אחרון']
+          fields: [this.ACC_LAST_SCRAPED_FIELD]
         })
         .firstPage();
 
       if (records.length > 0) {
-        const lastScraped = records[0].get('סקרייפינג אחרון');
+        const lastScraped = records[0].get(this.ACC_LAST_SCRAPED_FIELD);
         if (lastScraped) {
           return new Date(lastScraped as string);
         }

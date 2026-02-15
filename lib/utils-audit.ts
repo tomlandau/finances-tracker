@@ -9,12 +9,30 @@ import type { Request } from 'express';
 /**
  * Action types that can be logged
  */
-export type AuditAction = 'login' | 'logout' | 'create' | 'update' | 'delete' | '2fa_setup' | '2fa_verify';
+export type AuditAction =
+  | 'login'
+  | 'logout'
+  | 'create'
+  | 'update'
+  | 'delete'
+  | '2fa_setup'
+  | '2fa_verify'
+  | 'classify_transaction'  // Phase 2: Classification
+  | 'create_rule'           // Phase 2: Rule creation
+  | 'update_rule'           // Phase 2: Rule update
+  | 'delete_rule';          // Phase 2: Rule deletion
 
 /**
  * Resource types that actions are performed on
  */
-export type AuditResource = 'income' | 'expense' | 'category' | 'auth' | 'webauthn';
+export type AuditResource =
+  | 'income'
+  | 'expense'
+  | 'category'
+  | 'auth'
+  | 'webauthn'
+  | 'transaction'           // Phase 2: Transaction classification
+  | 'classification_rule';  // Phase 2: Classification rules
 
 /**
  * Audit event data structure
