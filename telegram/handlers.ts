@@ -4,7 +4,6 @@ import { Classifier } from '../classification/classifier';
 import {
   buildInitialClassificationKeyboard,
   buildCategoryKeyboard,
-  buildRuleConfirmationKeyboard,
   buildIgnoreConfirmationKeyboard
 } from './keyboards';
 import {
@@ -15,7 +14,7 @@ import {
   formatCategoryNotFound,
   formatTransactionNotFound
 } from './messages';
-import { logSuccess, logFailure } from '../lib/utils-audit';
+import { logSuccess } from '../lib/utils-audit';
 
 /**
  * Telegram Callback Query Handler - מטפל מרכזי לכל ה-callback queries

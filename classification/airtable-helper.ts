@@ -53,7 +53,7 @@ export class AirtableHelper {
   private readonly RULE_CONFIDENCE_FIELD = process.env.AIRTABLE_RULE_CONFIDENCE_FIELD || 'רמת ביטחון';
   private readonly RULE_TIMES_USED_FIELD = process.env.AIRTABLE_RULE_TIMES_USED_FIELD || 'מספר שימושים';
   private readonly RULE_CREATED_BY_FIELD = process.env.AIRTABLE_RULE_CREATED_BY_FIELD || 'נוצר על ידי';
-  private readonly RULE_DESCRIPTION_FIELD = process.env.AIRTABLE_RULE_DESCRIPTION_FIELD || 'תיאור';
+  // private readonly RULE_DESCRIPTION_FIELD = process.env.AIRTABLE_RULE_DESCRIPTION_FIELD || 'תיאור';
 
   constructor() {
     const apiKey = process.env.AIRTABLE_API_KEY;
@@ -72,7 +72,7 @@ export class AirtableHelper {
   async createIncomeRecord(
     transaction: Transaction,
     categoryId: string,
-    entity: string,
+    _entity: string,
     source: 'sumit' | 'client' | 'rule' | 'manual'
   ): Promise<string> {
     const record = await this.base(this.INCOME_TABLE).create({
@@ -93,7 +93,7 @@ export class AirtableHelper {
   async createExpenseRecord(
     transaction: Transaction,
     categoryId: string,
-    entity: string,
+    _entity: string,
     source: 'rule' | 'manual'
   ): Promise<string> {
     const record = await this.base(this.EXPENSE_TABLE).create({
@@ -147,7 +147,7 @@ export class AirtableHelper {
       })
       .all();
 
-    return records.map(r => ({
+    return records.map((r: any) => ({
       id: r.id,
       hash: r.get(this.TX_HASH_FIELD) as string,
       date: r.get(this.TX_DATE_FIELD) as string,
@@ -173,7 +173,7 @@ export class AirtableHelper {
       })
       .all();
 
-    return records.map(r => {
+    return records.map((r: any) => {
       // Normalize categoryId - can be array or single value
       const categoryIdArray = r.get(this.RULE_CATEGORY_FIELD);
       const categoryId = Array.isArray(categoryIdArray)
@@ -279,7 +279,7 @@ export class AirtableHelper {
       })
       .all();
 
-    return records.map(r => ({
+    return records.map((r: any) => ({
       id: r.id,
       name: r.get(nameField) as string,
       type,

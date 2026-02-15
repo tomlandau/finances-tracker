@@ -28,7 +28,7 @@ export class RulesEngine {
    */
   async findMatchingRule(
     description: string,
-    userId: string
+    _userId: string
   ): Promise<ClassificationRule | null> {
     try {
       console.log(`  🔍 Searching rules for: "${description}"`);
@@ -247,7 +247,7 @@ export class RulesEngine {
   /**
    * מחיקת חוק (יושם בעתיד)
    */
-  async deleteRule(ruleId: string): Promise<void> {
+  async deleteRule(_ruleId: string): Promise<void> {
     // TODO: Implement rule deletion
     // - Delete from Airtable
     // - Invalidate cache
@@ -258,8 +258,8 @@ export class RulesEngine {
    * עדכון חוק (יושם בעתיד)
    */
   async updateRule(
-    ruleId: string,
-    updates: Partial<ClassificationRule>
+    _ruleId: string,
+    _updates: Partial<ClassificationRule>
   ): Promise<void> {
     // TODO: Implement rule update
     // - Update in Airtable

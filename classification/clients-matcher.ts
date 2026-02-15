@@ -1,5 +1,5 @@
-import Airtable from 'airtable';
-import { parseISO, subDays, addDays, format } from 'date-fns';
+// import Airtable from 'airtable';
+// import { parseISO, subDays, addDays, format } from 'date-fns';
 import type { ClientRecord } from './types';
 
 /**
@@ -17,10 +17,10 @@ export class ClientsMatcher {
   private enabled: boolean = false;
 
   // Table and field names (will be configured when schemas are available)
-  private readonly CLIENTS_TABLE = process.env.AIRTABLE_CLIENTS_TABLE_NAME || 'Clients';
-  private readonly CLIENT_NAME_FIELD = process.env.AIRTABLE_CLIENT_NAME_FIELD || 'שם';
-  private readonly CLIENT_PAYMENT_DATE_FIELD = process.env.AIRTABLE_CLIENT_PAYMENT_DATE_FIELD || 'תאריך תשלום צפוי';
-  private readonly CLIENT_AMOUNT_FIELD = process.env.AIRTABLE_CLIENT_AMOUNT_FIELD || 'סכום צפוי';
+  // private readonly CLIENTS_TABLE = process.env.AIRTABLE_CLIENTS_TABLE_NAME || 'Clients';
+  // private readonly CLIENT_NAME_FIELD = process.env.AIRTABLE_CLIENT_NAME_FIELD || 'שם';
+  // private readonly CLIENT_PAYMENT_DATE_FIELD = process.env.AIRTABLE_CLIENT_PAYMENT_DATE_FIELD || 'תאריך תשלום צפוי';
+  // private readonly CLIENT_AMOUNT_FIELD = process.env.AIRTABLE_CLIENT_AMOUNT_FIELD || 'סכום צפוי';
 
   constructor() {
     this.apiKey = process.env.AIRTABLE_API_KEY;
@@ -57,7 +57,7 @@ export class ClientsMatcher {
 
     try {
       // Determine which base to query based on userId
-      const baseId = userId === 'usr_tom_001' ? this.business1BaseId : this.business2BaseId;
+      // const baseId = userId === 'usr_tom_001' ? this.business1BaseId : this.business2BaseId;
       const entity = userId === 'usr_tom_001' ? 'עסק תום' : 'עסק יעל';
 
       console.log(`  🔍 Searching ${entity} clients: ${date}, ₪${amount}`);
@@ -116,8 +116,8 @@ export class ClientsMatcher {
    * (יושם בעתיד)
    */
   async getUpcomingPayments(
-    userId: string,
-    daysAhead: number = 30
+    _userId: string,
+    _daysAhead: number = 30
   ): Promise<ClientRecord[]> {
     if (!this.enabled) {
       return [];
@@ -134,9 +134,9 @@ export class ClientsMatcher {
    * (יושם בעתיד)
    */
   async markPaymentReceived(
-    clientId: string,
-    userId: string,
-    transactionId: string
+    _clientId: string,
+    _userId: string,
+    _transactionId: string
   ): Promise<void> {
     if (!this.enabled) {
       return;
@@ -160,7 +160,7 @@ export class ClientsMatcher {
    * חיפוש לקוח לפי שם
    * (יושם בעתיד - שימושי לחיפוש ידני)
    */
-  async searchByName(name: string, userId: string): Promise<ClientRecord[]> {
+  async searchByName(_name: string, _userId: string): Promise<ClientRecord[]> {
     if (!this.enabled) {
       return [];
     }

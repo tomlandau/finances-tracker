@@ -42,7 +42,7 @@ export class SumitClient {
     date: string,
     amount: number,
     description: string,
-    userId: string
+    _userId: string
   ): Promise<SumitInvoice | null> {
     // If Sumit is not enabled, return null
     if (!this.enabled) {
@@ -51,7 +51,7 @@ export class SumitClient {
 
     try {
       // Determine which business to query based on userId
-      const businessId = userId === 'usr_tom_001' ? this.business1Id : this.business2Id;
+      // const businessId = userId === 'usr_tom_001' ? this.business1Id : this.business2Id;
 
       console.log(`  🔍 Searching Sumit for invoice: ${date}, ₪${amount}, ${description}`);
 
@@ -98,14 +98,14 @@ export class SumitClient {
    * מציאת התאמה הטובה ביותר מתוך רשימת חשבוניות
    * (יושם בעתיד כשיהיה Sumit API פעיל)
    */
-  private findBestMatch(invoices: any[], description: string): SumitInvoice | null {
-    // TODO: Implement fuzzy matching logic
-    // - Compare customer names with transaction description
-    // - Calculate similarity score
-    // - Return invoice with highest score (above threshold)
-
-    return null;
-  }
+  // private findBestMatch(_invoices: any[], _description: string): SumitInvoice | null {
+  //   // TODO: Implement fuzzy matching logic
+  //   // - Compare customer names with transaction description
+  //   // - Calculate similarity score
+  //   // - Return invoice with highest score (above threshold)
+  //
+  //   return null;
+  // }
 
   /**
    * בדיקה האם Sumit API פעיל
@@ -118,7 +118,7 @@ export class SumitClient {
    * קבלת פרטי חשבונית ספציפית לפי ID
    * (יושם בעתיד)
    */
-  async getInvoiceById(invoiceId: string): Promise<SumitInvoice | null> {
+  async getInvoiceById(_invoiceId: string): Promise<SumitInvoice | null> {
     if (!this.enabled) {
       return null;
     }

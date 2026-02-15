@@ -35,7 +35,7 @@ export default withAuth(async (req: AuthRequest, res: Response) => {
  */
 async function handleGet(req: AuthRequest, res: Response) {
   try {
-    const { userId, username } = req.user!;
+    const { username } = req.user!;
     const { type, entity, confidence } = req.query;
 
     console.log(`📊 Fetching classification rules for ${username}`);

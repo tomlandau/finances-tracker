@@ -53,7 +53,11 @@ export interface AuditEvent {
  * @param req - Vercel request object
  * @returns Client IP address or 'unknown'
  */
-export function getClientIp(req: Request): string {
+export function getClientIp(req: Request | null | undefined): string {
+  if (!req) {
+    return 'unknown';
+  }
+
   // Check Vercel/proxy headers first
   const forwardedFor = req.headers['x-forwarded-for'];
   if (forwardedFor) {
@@ -139,7 +143,7 @@ export async function logSuccess(
   username: string,
   action: AuditAction,
   resource: AuditResource,
-  req: Request,
+  req: Request | null | undefined,
   details?: string | object
 ): Promise<void> {
   await logAuditEvent({
@@ -161,7 +165,7 @@ export async function logFailure(
   username: string,
   action: AuditAction,
   resource: AuditResource,
-  req: Request,
+  req: Request | null | undefined,
   details?: string | object
 ): Promise<void> {
   await logAuditEvent({

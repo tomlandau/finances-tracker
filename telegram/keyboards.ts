@@ -84,8 +84,8 @@ export function buildInitialClassificationKeyboard(
  */
 export function buildCategoryKeyboard(
   transactionId: string,
-  type: 'income' | 'expense',
-  entity: string,
+  _type: 'income' | 'expense',
+  _entity: string,
   categories: Category[]
 ): InlineKeyboardMarkup {
   const buttons: InlineKeyboardButton[][] = [];
@@ -134,7 +134,7 @@ export function buildCategoryKeyboard(
 export function buildRuleConfirmationKeyboard(
   transactionId: string,
   categoryId: string,
-  categoryName: string
+  _categoryName: string
 ): InlineKeyboardMarkup {
   return {
     inline_keyboard: [
@@ -166,7 +166,7 @@ export function buildRuleConfirmationKeyboard(
  * @param showRuleCreated האם חוק נוצר
  * @returns inline keyboard markup או null (אין כפתורים)
  */
-export function buildSuccessKeyboard(showRuleCreated: boolean): InlineKeyboardMarkup | null {
+export function buildSuccessKeyboard(_showRuleCreated: boolean): InlineKeyboardMarkup | null {
   // בינתיים ללא כפתורים - רק הודעת הצלחה
   // בעתיד אפשר להוסיף "ביטול" או "עריכה"
   return null;
