@@ -134,7 +134,17 @@ export class ScraperManager {
       companyId: bankCreds.companyType,
       startDate: startDate,
       combineInstallments: false,
-      showBrowser: false
+      showBrowser: false,
+      // Required for running in containerized environments (Railway, Docker, etc.)
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu'
+      ]
     });
 
     // הרצת הסקרייפינג עם credentials
