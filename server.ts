@@ -40,7 +40,7 @@ import classificationRulesHandler from './api/classification-rules/index';
 // Import jobs
 import { startDailyScraperJob } from './jobs/daily-scraper';
 import { startClassifierWorker } from './jobs/classifier-worker';
-import { initTelegramBot } from './lib/utils-telegram';
+import { initTelegramBot, validateChatIds } from './lib/utils-telegram';
 import { initTelegramBotPolling } from './telegram/bot';
 
 // Load environment variables (only in development - Railway sets them directly)
@@ -127,6 +127,27 @@ if (process.env.NODE_ENV === 'production') {
   try {
     // Initialize Telegram notification bot (polling off)
     initTelegramBot();
+
+    // Validate Telegram chat IDs
+    console.log('🔍 Validating Telegram chat IDs...');
+    validateChatIds().then(result => {
+      if (result.invalid.length > 0) {
+        console.error('\n⚠️⚠️⚠️ CRITICAL: Invalid Telegram chat IDs detected! ⚠️⚠️⚠️');
+        console.error('The following chat IDs are invalid and will cause log spam:');
+        result.invalid.forEach(({ chatId, error }) => {
+          console.error(`  ❌ Chat ID ${chatId}: ${error}`);
+        });
+        console.error('\n📝 To fix this:');
+        console.error('  1. Message your bot on Telegram');
+        console.error(`  2. Visit: https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN?.substring(0, 10)}...YOUR_BOT_TOKEN.../getUpdates`);
+        console.error('  3. Find your chat.id in the response');
+        console.error('  4. Update TELEGRAM_CHAT_ID_TOM or TELEGRAM_CHAT_ID_YAEL in Railway environment variables\n');
+      } else {
+        console.log('✅ All Telegram chat IDs are valid');
+      }
+    }).catch(error => {
+      console.error('❌ Failed to validate chat IDs:', error);
+    });
 
     // Initialize Telegram interactive bot (polling on) - Phase 2
     initTelegramBotPolling();
