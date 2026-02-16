@@ -74,41 +74,76 @@ export function buildInitialClassificationKeyboard(
 }
 
 /**
- * מקלדת בחירת קטגוריה
+ * מקלדת בחירת קטגוריה (עם pagination אם יש יותר מדי קטגוריות)
  *
  * @param transactionId ID התנועה
  * @param type סוג (income/expense)
  * @param entity ישות (בית/עסק תום/עסק יעל/משותף)
  * @param categories רשימת קטגוריות זמינות
+ * @param page מספר עמוד (0-based, default: 0)
  * @returns inline keyboard markup
  */
 export function buildCategoryKeyboard(
   transactionId: string,
   _type: 'income' | 'expense',
   _entity: string,
-  categories: Category[]
+  categories: Category[],
+  page: number = 0
 ): InlineKeyboardMarkup {
   const buttons: InlineKeyboardButton[][] = [];
+  const PAGE_SIZE = 20; // Maximum 20 categories per page (10 rows)
+
+  // Calculate pagination
+  const totalPages = Math.ceil(categories.length / PAGE_SIZE);
+  const startIndex = page * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + PAGE_SIZE, categories.length);
+  const pageCategories = categories.slice(startIndex, endIndex);
 
   // יצירת כפתורים בשורות של 2
-  for (let i = 0; i < categories.length; i += 2) {
+  for (let i = 0; i < pageCategories.length; i += 2) {
     const row: InlineKeyboardButton[] = [];
 
     // First category in row
     row.push({
-      text: categories[i].name,
-      callback_data: `category:${transactionId}:${categories[i].id}:false`
+      text: pageCategories[i].name,
+      callback_data: `category:${transactionId}:${pageCategories[i].id}:false`
     });
 
     // Second category in row (if exists)
-    if (i + 1 < categories.length) {
+    if (i + 1 < pageCategories.length) {
       row.push({
-        text: categories[i + 1].name,
-        callback_data: `category:${transactionId}:${categories[i + 1].id}:false`
+        text: pageCategories[i + 1].name,
+        callback_data: `category:${transactionId}:${pageCategories[i + 1].id}:false`
       });
     }
 
     buttons.push(row);
+  }
+
+  // Pagination buttons (if needed)
+  if (totalPages > 1) {
+    const paginationRow: InlineKeyboardButton[] = [];
+
+    if (page > 0) {
+      paginationRow.push({
+        text: '◀️ קודם',
+        callback_data: `page:${transactionId}:${page - 1}`
+      });
+    }
+
+    paginationRow.push({
+      text: `${page + 1}/${totalPages}`,
+      callback_data: `noop:${transactionId}` // No-op button
+    });
+
+    if (page < totalPages - 1) {
+      paginationRow.push({
+        text: 'הבא ▶️',
+        callback_data: `page:${transactionId}:${page + 1}`
+      });
+    }
+
+    buttons.push(paginationRow);
   }
 
   // כפתור חזרה

@@ -10,6 +10,14 @@ import { getEntityEmoji, getTypeEmoji } from './keyboards';
  */
 
 /**
+ * Escape special Markdown characters for Telegram
+ * Prevents parsing errors when transaction descriptions contain *, _, [, etc.
+ */
+function escapeMarkdown(text: string): string {
+  return text.replace(/([*_\[\]()~`>#+=|{}.!\\-])/g, '\\$1');
+}
+
+/**
  * הודעת תנועה חדשה לסיווג
  */
 export function formatTransactionMessage(transaction: Transaction): string {
@@ -22,8 +30,8 @@ export function formatTransactionMessage(transaction: Transaction): string {
 
 ${type}: ₪${amount}
 📅 תאריך: ${date}
-🏦 מקור: ${transaction.source}
-📝 תיאור: ${transaction.description}
+🏦 מקור: ${escapeMarkdown(transaction.source)}
+📝 תיאור: ${escapeMarkdown(transaction.description)}
 
 אנא בחר קטגוריה:
   `.trim();
@@ -68,7 +76,7 @@ export function formatIgnoreConfirmation(transaction: Transaction): string {
 ⚠️ *האם להתעלם מתנועה זו?*
 
 ₪${amount} | ${date}
-${transaction.description}
+${escapeMarkdown(transaction.description)}
 
 התנועה לא תסווג ולא תופיע יותר ברשימה.
   `.trim();

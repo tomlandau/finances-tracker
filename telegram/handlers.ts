@@ -73,6 +73,15 @@ export async function handleCallbackQuery(query: CallbackQuery): Promise<void> {
         await handleBackToCategoriesAction(query, params);
         break;
 
+      case 'page':
+        await handlePageAction(query, params);
+        break;
+
+      case 'noop':
+        // No-op - just answer the callback to remove the loading state
+        await bot.answerCallbackQuery(query.id);
+        break;
+
       default:
         console.warn(`Unknown callback action: ${action}`);
         await bot.answerCallbackQuery(query.id, {
@@ -436,8 +445,8 @@ async function handleBackToCategoriesAction(query: CallbackQuery, params: string
   const classifier = new Classifier();
   const categories = await classifier.getCategories(state.type, state.entity);
 
-  // Restore category keyboard
-  const keyboard = buildCategoryKeyboard(transactionId, state.type, state.entity, categories);
+  // Restore category keyboard (page 0)
+  const keyboard = buildCategoryKeyboard(transactionId, state.type, state.entity, categories, 0);
 
   await bot.editMessageReplyMarkup(keyboard, {
     chat_id: chatId,
@@ -445,4 +454,40 @@ async function handleBackToCategoriesAction(query: CallbackQuery, params: string
   });
 
   await bot.answerCallbackQuery(query.id);
+}
+
+/**
+ * טיפול בניווט בין עמודים של קטגוריות
+ * Format: page:{transactionId}:{pageNumber}
+ */
+async function handlePageAction(query: CallbackQuery, params: string[]): Promise<void> {
+  const bot = getTelegramBot();
+  const [transactionId, pageStr] = params;
+  const page = parseInt(pageStr, 10);
+  const chatId = query.message!.chat.id;
+  const messageId = query.message!.message_id;
+
+  console.log(`  → Page navigation: ${transactionId}, page ${page}`);
+
+  // Get flow state
+  const state = flowState.get(transactionId);
+  if (!state) {
+    throw new Error('Flow state not found');
+  }
+
+  // Fetch categories
+  const classifier = new Classifier();
+  const categories = await classifier.getCategories(state.type, state.entity);
+
+  // Build keyboard for requested page
+  const keyboard = buildCategoryKeyboard(transactionId, state.type, state.entity, categories, page);
+
+  await bot.editMessageReplyMarkup(keyboard, {
+    chat_id: chatId,
+    message_id: messageId
+  });
+
+  await bot.answerCallbackQuery(query.id, {
+    text: `עמוד ${page + 1}`
+  });
 }
