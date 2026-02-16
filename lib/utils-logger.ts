@@ -89,7 +89,7 @@ class RateLimitedLogger {
     const now = Date.now();
     const suppressedErrors: string[] = [];
 
-    for (const [key, entry] of this.errorCache.entries()) {
+    for (const entry of this.errorCache.values()) {
       if (entry.count > 1) {
         suppressedErrors.push(
           `  - ${entry.message}: ${entry.count} occurrences (last ${Math.round((now - entry.lastLogged) / 1000)}s ago)`

@@ -15,7 +15,11 @@
   "include": [
     "server.ts",
     "api/**/*",
-    "lib/**/*"
+    "lib/**/*",
+    "classification/**/*",
+    "telegram/**/*",
+    "jobs/**/*",
+    "scrapers/**/*"
   ],
   "exclude": [
     "node_modules",

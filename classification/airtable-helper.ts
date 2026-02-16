@@ -68,6 +68,22 @@ export class AirtableHelper {
   }
 
   /**
+   * מיפוי ישות למבנה טבלת הכנסות
+   * Income categories use: "תום", "יעל", "משותף"
+   * But the system uses: "עסק תום", "עסק יעל", "עסק - משותף"
+   */
+  private mapEntityForIncome(entity: string): string {
+    const mapping: Record<string, string> = {
+      'עסק תום': 'תום',
+      'עסק יעל': 'יעל',
+      'עסק - משותף': 'משותף',
+      'בית': 'בית', // Keep as-is if exists
+    };
+
+    return mapping[entity] || entity;
+  }
+
+  /**
    * יצירת record חדש בטבלת הכנסות
    */
   async createIncomeRecord(
@@ -269,9 +285,11 @@ export class AirtableHelper {
     if (entity) {
       if (type === 'income') {
         // For income, filter by "של מי ההכנסה" field
+        // Map entity: "עסק תום" → "תום", "עסק יעל" → "יעל", etc.
+        const mappedEntity = this.mapEntityForIncome(entity);
         filterFormula = `AND(
           {${statusField}} = 'פעיל',
-          {${this.CATEGORY_OWNER_FIELD}} = '${entity}'
+          {${this.CATEGORY_OWNER_FIELD}} = '${mappedEntity}'
         )`;
       } else {
         // For expense, filter by "עסקי/בית" field

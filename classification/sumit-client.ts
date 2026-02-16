@@ -3,27 +3,26 @@ import type { SumitInvoice } from './types';
 /**
  * Sumit API Client - אינטגרציה עם Sumit לזיהוי חשבוניות
  *
- * Note: זהו stub - האינטגרציה המלאה תיושם כאשר נקבל:
- * 1. SUMIT_API_KEY
- * 2. SUMIT_BUSINESS_1_ID (עסק תום)
- * 3. SUMIT_BUSINESS_2_ID (עסק יעל)
+ * Note: כל עסק משתמש ב-API key נפרד משלו
+ * - SUMIT_API_KEY_TOM (עסק תום)
+ * - SUMIT_API_KEY_YAEL (עסק יעל)
  */
 export class SumitClient {
-  private apiKey: string | undefined;
-  private business1Id: string | undefined;
-  private business2Id: string | undefined;
+  private apiKeyTom: string | undefined;
+  private apiKeyYael: string | undefined;
   private enabled: boolean = false;
 
   constructor() {
-    this.apiKey = process.env.SUMIT_API_KEY;
-    this.business1Id = process.env.SUMIT_BUSINESS_1_ID;
-    this.business2Id = process.env.SUMIT_BUSINESS_2_ID;
+    this.apiKeyTom = process.env.SUMIT_API_KEY_TOM;
+    this.apiKeyYael = process.env.SUMIT_API_KEY_YAEL;
 
-    // Enable only if all credentials are present
-    this.enabled = !!(this.apiKey && this.business1Id && this.business2Id);
+    // Enable only if both API keys are present
+    this.enabled = !!(this.apiKeyTom && this.apiKeyYael);
 
     if (!this.enabled) {
       console.log('⚠️ Sumit API disabled (missing credentials)');
+      if (!this.apiKeyTom) console.log('  Missing: SUMIT_API_KEY_TOM');
+      if (!this.apiKeyYael) console.log('  Missing: SUMIT_API_KEY_YAEL');
     } else {
       console.log('✅ Sumit API enabled');
     }
@@ -42,7 +41,7 @@ export class SumitClient {
     date: string,
     amount: number,
     description: string,
-    _userId: string
+    userId: string
   ): Promise<SumitInvoice | null> {
     // If Sumit is not enabled, return null
     if (!this.enabled) {
@@ -50,17 +49,17 @@ export class SumitClient {
     }
 
     try {
-      // Determine which business to query based on userId
-      // const businessId = userId === 'usr_tom_001' ? this.business1Id : this.business2Id;
+      // Determine which business we're searching for
+      const businessName = userId === 'usr_tom_001' ? 'תום' : 'יעל';
 
-      console.log(`  🔍 Searching Sumit for invoice: ${date}, ₪${amount}, ${description}`);
+      console.log(`  🔍 Searching Sumit (${businessName}) for invoice: ${date}, ₪${amount}, ${description}`);
 
       // TODO: Implement actual Sumit API call when credentials are available
+      // Use: const apiKey = userId === 'usr_tom_001' ? this.apiKeyTom : this.apiKeyYael;
       //
       // Expected API flow:
       // 1. Query Sumit API: GET /api/v1/invoices
       // 2. Filter by:
-      //    - businessId
       //    - date range: ±3 days from transaction date
       //    - amount: exact match OR ±5% tolerance
       // 3. Match description (fuzzy matching on customer name)
@@ -69,11 +68,10 @@ export class SumitClient {
       // Example API call (pseudo-code):
       // const response = await fetch(`https://api.sumit.co.il/v1/invoices`, {
       //   headers: {
-      //     'Authorization': `Bearer ${this.apiKey}`,
+      //     'Authorization': `Bearer ${apiKey}`,
       //     'Content-Type': 'application/json'
       //   },
       //   params: {
-      //     businessId,
       //     dateFrom: subDays(parseISO(date), 3).toISOString(),
       //     dateTo: addDays(parseISO(date), 3).toISOString(),
       //     amountMin: amount * 0.95,
