@@ -203,11 +203,10 @@ export class ScraperManager {
       // המרת תאריך לפורמט YYYY-MM-DD
       const date = format(new Date(txn.date), 'yyyy-MM-dd');
 
-      // israeli-bank-scrapers מחזיר הוצאות כחיוביות - נהפוך לשליליות
-      // סוג התנועה: charge = הוצאה, installments = תשלומים
-      const amount = txn.type === 'normal' || txn.type === 'installments'
-        ? -Math.abs(txn.chargedAmount)
-        : Math.abs(txn.chargedAmount);
+      // israeli-bank-scrapers כבר מחזיר סימן נכון:
+      // הוצאות = שלילי (-), הכנסות = חיובי (+)
+      // פשוט נשתמש בערך כמו שהוא
+      const amount = txn.chargedAmount;
 
       const normalized: NormalizedTransaction = {
         date,

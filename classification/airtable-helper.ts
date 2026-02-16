@@ -41,6 +41,7 @@ export class AirtableHelper {
   // Category table fields
   private readonly CATEGORY_NAME_FIELD = process.env.AIRTABLE_CATEGORY_NAME_FIELD || 'שם';
   private readonly CATEGORY_STATUS_FIELD = process.env.AIRTABLE_CATEGORY_STATUS_FIELD || 'סטטוס';
+  private readonly CATEGORY_OWNER_FIELD = process.env.AIRTABLE_CATEGORY_OWNER_FIELD || 'של מי ההכנסה';
   private readonly EXPENSE_CATEGORY_NAME_FIELD = process.env.AIRTABLE_EXPENSE_CATEGORY_NAME_FIELD || 'תיאור/הערות';
   private readonly EXPENSE_CATEGORY_STATUS_FIELD = process.env.AIRTABLE_EXPENSE_CATEGORY_STATUS_FIELD || 'סטטוס';
   private readonly EXPENSE_BUSINESS_HOME_FIELD = process.env.AIRTABLE_EXPENSE_BUSINESS_HOME_FIELD || 'עסקי/בית';
@@ -262,14 +263,23 @@ export class AirtableHelper {
       ? this.CATEGORY_STATUS_FIELD
       : this.EXPENSE_CATEGORY_STATUS_FIELD;
 
-    // Build filter - for expenses, optionally filter by entity
+    // Build filter - filter by entity for both income and expense
     let filterFormula = `{${statusField}} = 'פעיל'`;
 
-    if (type === 'expense' && entity) {
-      filterFormula = `AND(
-        {${statusField}} = 'פעיל',
-        {${this.EXPENSE_BUSINESS_HOME_FIELD}} = '${entity}'
-      )`;
+    if (entity) {
+      if (type === 'income') {
+        // For income, filter by "של מי ההכנסה" field
+        filterFormula = `AND(
+          {${statusField}} = 'פעיל',
+          {${this.CATEGORY_OWNER_FIELD}} = '${entity}'
+        )`;
+      } else {
+        // For expense, filter by "עסקי/בית" field
+        filterFormula = `AND(
+          {${statusField}} = 'פעיל',
+          {${this.EXPENSE_BUSINESS_HOME_FIELD}} = '${entity}'
+        )`;
+      }
     }
 
     const records = await this.base(tableName)
