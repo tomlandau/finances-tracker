@@ -1,31 +1,58 @@
 import type { SumitInvoice } from './types';
 
+const SUMIT_BASE_URL = 'https://api.sumit.co.il';
+
+interface UserConfig {
+  apiKey: string;
+  companyId: number;
+  docType: string;
+  businessName: string;
+}
+
 /**
  * Sumit API Client - אינטגרציה עם Sumit לזיהוי חשבוניות
  *
- * Note: כל עסק משתמש ב-API key נפרד משלו
- * - SUMIT_API_KEY_TOM (עסק תום)
- * - SUMIT_API_KEY_YAEL (עסק יעל)
+ * Note: כל עסק משתמש ב-API key ו-Company ID נפרד משלו
+ * - תום: InvoiceAndReceipt (1) - חשבונית מס/קבלה
+ * - יעל: Receipt (2) - קבלה
  */
 export class SumitClient {
-  private apiKeyTom: string | undefined;
-  private apiKeyYael: string | undefined;
+  private configs: Record<string, UserConfig> = {};
   private enabled: boolean = false;
 
   constructor() {
-    this.apiKeyTom = process.env.SUMIT_API_KEY_TOM;
-    this.apiKeyYael = process.env.SUMIT_API_KEY_YAEL;
+    const apiKeyTom = process.env.SUMIT_API_KEY_TOM;
+    const apiKeyYael = process.env.SUMIT_API_KEY_YAEL;
+    const companyIdTom = process.env.SUMIT_COMPANY_ID_TOM;
+    const companyIdYael = process.env.SUMIT_COMPANY_ID_YAEL;
 
-    // Enable only if both API keys are present
-    this.enabled = !!(this.apiKeyTom && this.apiKeyYael);
+    const missing = [];
+    if (!apiKeyTom) missing.push('SUMIT_API_KEY_TOM');
+    if (!apiKeyYael) missing.push('SUMIT_API_KEY_YAEL');
+    if (!companyIdTom) missing.push('SUMIT_COMPANY_ID_TOM');
+    if (!companyIdYael) missing.push('SUMIT_COMPANY_ID_YAEL');
 
-    if (!this.enabled) {
-      console.log('⚠️ Sumit API disabled (missing credentials)');
-      if (!this.apiKeyTom) console.log('  Missing: SUMIT_API_KEY_TOM');
-      if (!this.apiKeyYael) console.log('  Missing: SUMIT_API_KEY_YAEL');
-    } else {
-      console.log('✅ Sumit API enabled');
+    if (missing.length > 0) {
+      console.log('⚠️ Sumit API disabled (missing credentials):', missing.join(', '));
+      return;
     }
+
+    this.configs['usr_tom_001'] = {
+      apiKey: apiKeyTom!,
+      companyId: parseInt(companyIdTom!),
+      docType: 'InvoiceAndReceipt (1)',
+      businessName: 'תום',
+    };
+
+    this.configs['usr_yael_001'] = {
+      apiKey: apiKeyYael!,
+      companyId: parseInt(companyIdYael!),
+      docType: 'Receipt (2)',
+      businessName: 'יעל',
+    };
+
+    this.enabled = true;
+    console.log('✅ Sumit API enabled');
   }
 
   /**
@@ -43,85 +70,134 @@ export class SumitClient {
     description: string,
     userId: string
   ): Promise<SumitInvoice | null> {
-    // If Sumit is not enabled, return null
-    if (!this.enabled) {
+    if (!this.enabled) return null;
+
+    const config = this.configs[userId];
+    if (!config) {
+      console.log(`  ⚠️ No Sumit config for userId: ${userId}`);
       return null;
     }
 
+    console.log(`  🔍 Searching Sumit (${config.businessName}) for: ${date}, ₪${amount}, ${description}`);
+
     try {
-      // Determine which business we're searching for
-      const businessName = userId === 'usr_tom_001' ? 'תום' : 'יעל';
+      const dateFrom = offsetDate(date, -7);
+      const dateTo = offsetDate(date, 7);
 
-      console.log(`  🔍 Searching Sumit (${businessName}) for invoice: ${date}, ₪${amount}, ${description}`);
+      const response = await fetch(`${SUMIT_BASE_URL}/accounting/documents/list/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          Credentials: { CompanyID: config.companyId, APIKey: config.apiKey },
+          DocumentTypes: [config.docType],
+          DateFrom: dateFrom,
+          DateTo: dateTo,
+          IncludeDrafts: false,
+        }),
+      });
 
-      // TODO: Implement actual Sumit API call when credentials are available
-      // Use: const apiKey = userId === 'usr_tom_001' ? this.apiKeyTom : this.apiKeyYael;
-      //
-      // Expected API flow:
-      // 1. Query Sumit API: GET /api/v1/invoices
-      // 2. Filter by:
-      //    - date range: ±3 days from transaction date
-      //    - amount: exact match OR ±5% tolerance
-      // 3. Match description (fuzzy matching on customer name)
-      // 4. Return best match
-      //
-      // Example API call (pseudo-code):
-      // const response = await fetch(`https://api.sumit.co.il/v1/invoices`, {
-      //   headers: {
-      //     'Authorization': `Bearer ${apiKey}`,
-      //     'Content-Type': 'application/json'
-      //   },
-      //   params: {
-      //     dateFrom: subDays(parseISO(date), 3).toISOString(),
-      //     dateTo: addDays(parseISO(date), 3).toISOString(),
-      //     amountMin: amount * 0.95,
-      //     amountMax: amount * 1.05
-      //   }
-      // });
-      //
-      // const invoices = await response.json();
-      // const matched = this.findBestMatch(invoices, description);
-      // if (!matched) return null;
-      //
-      // פרסור שדה מע"מ מה-API של Sumit:
-      // כל חשבונית/קבלה ב-Sumit מכילה שדה המציין אם הסכום כולל מע"מ.
-      // שם השדה המדויק צריך לאמת מול ה-API docs של Sumit, לדוגמה:
-      //   matched.vatType === 'inclusive'  → vatIncluded = true
-      //   matched.vatType === 'exclusive'  → vatIncluded = false
-      // או:
-      //   matched.includesVat === true/false
-      //
-      // return {
-      //   id: matched.id,
-      //   date: matched.date,
-      //   amount: matched.amount,
-      //   customerName: matched.customerName,
-      //   description: matched.description,
-      //   vatIncluded: matched.vatType === 'inclusive',  // ← לאמת מול Sumit API docs
-      // };
+      if (!response.ok) {
+        console.error(`  ❌ Sumit list HTTP error: ${response.status}`);
+        return null;
+      }
 
-      // Stub: return null (no match)
-      console.log(`  ⏸️ Sumit API stub - skipping (implementation pending)`);
-      return null;
+      const data = await response.json();
+
+      if (data.Status !== 'Success (0)') {
+        console.error(`  ❌ Sumit list error: ${data.UserErrorMessage || data.Status}`);
+        return null;
+      }
+
+      const documents: any[] = data.Data?.Documents ?? [];
+
+      if (documents.length === 0) {
+        console.log(`  ℹ️ Sumit: no documents found in date range`);
+        return null;
+      }
+
+      // מציאת התאמה לפי סכום (±1%) וקרבה לתאריך
+      const matched = findBestMatch(documents, amount, date);
+
+      if (!matched) {
+        console.log(`  ℹ️ Sumit: no amount match for ₪${amount}`);
+        return null;
+      }
+
+      // קביעת vatIncluded
+      let vatIncluded: boolean;
+      if (userId === 'usr_yael_001') {
+        vatIncluded = false;
+      } else {
+        // תום: לפרסר מתוך פרטי המסמך
+        vatIncluded = await this.getVatIncludedFromDetails(
+          matched.DocumentID,
+          config.docType,
+          config.companyId,
+          config.apiKey
+        );
+      }
+
+      const docDate = parseDocumentDate(matched.DocumentDate ?? matched.Date ?? date);
+
+      console.log(`  ✅ Sumit match found: מסמך #${matched.DocumentNumber}, ₪${matched.CompanyValue}, vatIncluded=${vatIncluded}`);
+
+      return {
+        id: String(matched.DocumentID),
+        date: docDate,
+        amount: matched.CompanyValue,
+        customerName: matched.CustomerName ?? '',
+        description: `מסמך #${matched.DocumentNumber}`,
+        vatIncluded,
+      };
 
     } catch (error) {
-      console.error('❌ Sumit API error:', error);
+      console.error('❌ Sumit findInvoice error:', error);
       return null;
     }
   }
 
   /**
-   * מציאת התאמה הטובה ביותר מתוך רשימת חשבוניות
-   * (יושם בעתיד כשיהיה Sumit API פעיל)
+   * קריאת פרטי מסמך ובדיקה אם כולל מע"מ לפי שדות Items
    */
-  // private findBestMatch(_invoices: any[], _description: string): SumitInvoice | null {
-  //   // TODO: Implement fuzzy matching logic
-  //   // - Compare customer names with transaction description
-  //   // - Calculate similarity score
-  //   // - Return invoice with highest score (above threshold)
-  //
-  //   return null;
-  // }
+  private async getVatIncludedFromDetails(
+    documentId: number,
+    documentType: string,
+    companyId: number,
+    apiKey: string
+  ): Promise<boolean> {
+    try {
+      const response = await fetch(`${SUMIT_BASE_URL}/accounting/documents/getdetails/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          Credentials: { CompanyID: companyId, APIKey: apiKey },
+          DocumentID: documentId,
+          DocumentType: documentType,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error(`  ❌ Sumit getdetails HTTP error: ${response.status}`);
+        return true; // ברירת מחדל לתום - כולל מע"מ
+      }
+
+      const data = await response.json();
+
+      if (data.Status !== 'Success (0)') {
+        console.error(`  ❌ Sumit getdetails error: ${data.UserErrorMessage || data.Status}`);
+        return true;
+      }
+
+      const items: any[] = data.Data?.Document?.Items ?? [];
+      const hasVat = items.some((item: any) => (item.VAT ?? 0) > 0);
+
+      return hasVat;
+
+    } catch (error) {
+      console.error('❌ Sumit getdetails error:', error);
+      return true; // ברירת מחדל לתום
+    }
+  }
 
   /**
    * בדיקה האם Sumit API פעיל
@@ -129,32 +205,45 @@ export class SumitClient {
   isEnabled(): boolean {
     return this.enabled;
   }
+}
 
-  /**
-   * קבלת פרטי חשבונית ספציפית לפי ID
-   * (יושם בעתיד)
-   */
-  async getInvoiceById(_invoiceId: string): Promise<SumitInvoice | null> {
-    if (!this.enabled) {
-      return null;
-    }
+// ─── Helpers ───────────────────────────────────────────────────────────────
 
-    // TODO: Implement when Sumit API is available
-    return null;
+function offsetDate(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+function parseDocumentDate(raw: string): string {
+  // Sumit might return dates as ISO strings or /Date(...)/ format
+  if (raw.startsWith('/Date(')) {
+    const ms = parseInt(raw.replace(/\/Date\((\d+)[^)]*\)\//, '$1'));
+    return new Date(ms).toISOString().split('T')[0];
   }
+  // ISO or YYYY-MM-DD
+  return raw.split('T')[0];
+}
 
-  /**
-   * רענון מטמון חשבוניות
-   * (יושם בעתיד אם נחליט להשתמש במטמון)
-   */
-  async refreshCache(): Promise<void> {
-    if (!this.enabled) {
-      return;
-    }
+function findBestMatch(documents: any[], amount: number, date: string): any | null {
+  const TOLERANCE = 0.01; // 1%
 
-    // TODO: Implement caching strategy if needed
-    // - Fetch recent invoices (last 90 days)
-    // - Store in memory or Redis
-    // - Refresh every X hours
-  }
+  const candidates = documents.filter((doc) => {
+    const docAmount = doc.CompanyValue ?? doc.DocumentValue ?? 0;
+    if (docAmount === 0) return false;
+    return Math.abs(docAmount - amount) / amount <= TOLERANCE;
+  });
+
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0];
+
+  // בחירת הקרוב ביותר לתאריך
+  const targetMs = new Date(date).getTime();
+  candidates.sort((a, b) => {
+    const dateA = parseDocumentDate(a.DocumentDate ?? a.Date ?? date);
+    const dateB = parseDocumentDate(b.DocumentDate ?? b.Date ?? date);
+    return Math.abs(new Date(dateA).getTime() - targetMs) - Math.abs(new Date(dateB).getTime() - targetMs);
+  });
+
+  return candidates[0];
 }
