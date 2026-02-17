@@ -21,8 +21,12 @@ export class AirtableHelper {
   private readonly TX_AMOUNT_FIELD = process.env.AIRTABLE_TRANSACTION_AMOUNT_FIELD || 'סכום';
   private readonly TX_DESCRIPTION_FIELD = process.env.AIRTABLE_TRANSACTION_DESCRIPTION_FIELD || 'תיאור';
   private readonly TX_SOURCE_FIELD = process.env.AIRTABLE_TRANSACTION_SOURCE_FIELD || 'מקור';
+  // Optional: lookup/formula field that resolves linked account name to text
+  // Add a Lookup field in Airtable: "שם מקור" → looks up "שם" from the linked account record
+  private readonly TX_SOURCE_NAME_FIELD = process.env.AIRTABLE_TRANSACTION_SOURCE_NAME_FIELD || '';
   private readonly TX_STATUS_FIELD = process.env.AIRTABLE_TRANSACTION_STATUS_FIELD || 'סטטוס';
   private readonly TX_USER_ID_FIELD = process.env.AIRTABLE_TRANSACTION_USER_ID_FIELD || 'מזהה משתמש';
+  private readonly TX_LINKED_RECORD_FIELD = process.env.AIRTABLE_TRANSACTION_LINKED_RECORD_FIELD || 'רשומה מקושרת';
 
   // Income table fields
   private readonly INCOME_DATE_FIELD = process.env.AIRTABLE_INCOME_DATE_FIELD || 'תאריך';
@@ -48,12 +52,14 @@ export class AirtableHelper {
 
   // Classification Rules table fields
   private readonly RULE_PATTERN_FIELD = process.env.AIRTABLE_RULE_PATTERN_FIELD || 'תבנית התאמה';
-  private readonly RULE_CATEGORY_FIELD = process.env.AIRTABLE_RULE_CATEGORY_FIELD || 'קטגוריה';
+  private readonly RULE_INCOME_CATEGORY_FIELD = process.env.AIRTABLE_RULE_INCOME_CATEGORY_FIELD || 'קטגוריית הכנסה';
+  private readonly RULE_EXPENSE_CATEGORY_FIELD = process.env.AIRTABLE_RULE_EXPENSE_CATEGORY_FIELD || 'קטגוריית הוצאה';
   private readonly RULE_ENTITY_FIELD = process.env.AIRTABLE_RULE_ENTITY_FIELD || 'ישות';
   private readonly RULE_TYPE_FIELD = process.env.AIRTABLE_RULE_TYPE_FIELD || 'סוג';
   private readonly RULE_CONFIDENCE_FIELD = process.env.AIRTABLE_RULE_CONFIDENCE_FIELD || 'רמת ביטחון';
   private readonly RULE_TIMES_USED_FIELD = process.env.AIRTABLE_RULE_TIMES_USED_FIELD || 'מספר שימושים';
   private readonly RULE_CREATED_BY_FIELD = process.env.AIRTABLE_RULE_CREATED_BY_FIELD || 'נוצר על ידי';
+  private readonly RULE_OVERRIDE_AMOUNT_FIELD = process.env.AIRTABLE_RULE_OVERRIDE_AMOUNT_FIELD || 'סכום מוגדר';
   // private readonly RULE_DESCRIPTION_FIELD = process.env.AIRTABLE_RULE_DESCRIPTION_FIELD || 'תיאור';
 
   constructor() {
@@ -65,6 +71,31 @@ export class AirtableHelper {
     }
 
     this.base = new Airtable({ apiKey }).base(baseId);
+  }
+
+  /**
+   * נרמול שדה מקור - עשוי להיות טקסט או linked record (מחזיר מזהים)
+   * אם TX_SOURCE_NAME_FIELD מוגדר (lookup/formula field) - ישתמש בו לשם קריא
+   */
+  private normalizeSource(record: any): string {
+    // Try the display name field first (lookup/formula field)
+    if (this.TX_SOURCE_NAME_FIELD) {
+      const nameValue = record.get(this.TX_SOURCE_NAME_FIELD);
+      if (nameValue && typeof nameValue === 'string' && nameValue.trim()) {
+        return nameValue;
+      }
+      // Lookup fields return arrays
+      if (Array.isArray(nameValue) && nameValue.length > 0) {
+        return String(nameValue[0]);
+      }
+    }
+
+    // Fallback to raw source field
+    const raw = record.get(this.TX_SOURCE_FIELD);
+    if (typeof raw === 'string') return raw;
+    // Linked record field returns array of record IDs - show first ID as fallback
+    if (Array.isArray(raw) && raw.length > 0) return String(raw[0]);
+    return '';
   }
 
   /**
@@ -81,6 +112,17 @@ export class AirtableHelper {
     };
 
     return mapping[entity] || entity;
+  }
+
+  /**
+   * מיפוי ישות לערך בשדה "עסקי/בית" בקטגוריות הוצאה
+   * The expense "עסקי/בית" field has values: "עסקי" or "בית"
+   * But the system entity names are: "עסק תום", "עסק יעל", "עסק - משותף", "בית"
+   */
+  private mapEntityForExpense(entity: string): string {
+    if (entity === 'בית') return 'בית';
+    // All business entities map to 'עסקי'
+    return 'עסקי';
   }
 
   /**
@@ -106,27 +148,35 @@ export class AirtableHelper {
 
   /**
    * יצירת record חדש בטבלת הוצאות
+   * @param overrideAmount סכום לרישום - אם מוגדר, ישמש במקום הסכום האמיתי (למשל 019, Cloudways)
    */
   async createExpenseRecord(
     transaction: Transaction,
     categoryId: string,
     _entity: string,
-    source: 'rule' | 'manual'
+    source: 'rule' | 'manual',
+    overrideAmount?: number
   ): Promise<string> {
+    const amount = overrideAmount ?? Math.abs(transaction.amount);
     const record = await this.base(this.EXPENSE_TABLE).create({
       [this.EXPENSE_DATE_FIELD]: transaction.date,
       [this.EXPENSE_CATEGORY_FIELD]: [categoryId], // Link field - must be array
-      [this.EXPENSE_AMOUNT_FIELD]: Math.abs(transaction.amount),
+      [this.EXPENSE_AMOUNT_FIELD]: amount,
       [this.EXPENSE_DESCRIPTION_FIELD]: `${transaction.description} (סווג: ${source})`,
       [this.EXPENSE_VAT_TYPE_FIELD]: 'ללא מע"מ',
     });
 
-    console.log(`  ✅ Created expense record: ${record.id} (${source})`);
+    if (overrideAmount !== undefined) {
+      console.log(`  ✅ Created expense record: ${record.id} (${source}, סכום מוגדר: ₪${overrideAmount} במקום ₪${Math.abs(transaction.amount)})`);
+    } else {
+      console.log(`  ✅ Created expense record: ${record.id} (${source})`);
+    }
     return record.id;
   }
 
   /**
    * עדכון סטטוס תנועה לאחר סיווג
+   * הקישור לרשומה מקושרת הוא אופציונלי - אם נכשל, הסיווג עדיין מצליח
    */
   async updateTransactionStatus(
     transactionId: string,
@@ -139,15 +189,28 @@ export class AirtableHelper {
     };
 
     if (linkedRecordId) {
-      updateData['רשומה מקושרת'] = [linkedRecordId];
+      updateData[this.TX_LINKED_RECORD_FIELD] = [linkedRecordId];
     }
 
     if (ruleId) {
       updateData['סווג על ידי חוק'] = [ruleId];
     }
 
-    await this.base(this.TRANSACTIONS_TABLE).update(transactionId, updateData);
-    console.log(`  ✅ Updated transaction status: ${transactionId} → ${status}`);
+    try {
+      await this.base(this.TRANSACTIONS_TABLE).update(transactionId, updateData);
+      console.log(`  ✅ Updated transaction status: ${transactionId} → ${status}`);
+    } catch (error: any) {
+      // If linking fails due to wrong field name, retry without the linked record
+      if (linkedRecordId && error?.statusCode === 422) {
+        console.warn(`  ⚠️ Could not set linked record field "${this.TX_LINKED_RECORD_FIELD}" - updating status only`);
+        const statusOnlyData = { [this.TX_STATUS_FIELD]: status };
+        if (ruleId) (statusOnlyData as any)['סווג על ידי חוק'] = [ruleId];
+        await this.base(this.TRANSACTIONS_TABLE).update(transactionId, statusOnlyData);
+        console.log(`  ✅ Updated transaction status (no link): ${transactionId} → ${status}`);
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**
@@ -164,22 +227,16 @@ export class AirtableHelper {
       })
       .all();
 
-    return records.map((r: any) => {
-      // Source is a Link field (returns array of record IDs), extract first value
-      const sourceVal = r.get(this.TX_SOURCE_FIELD);
-      const source = Array.isArray(sourceVal) ? (sourceVal[0] || '') : (sourceVal || '');
-
-      return {
-        id: r.id,
-        hash: r.get(this.TX_HASH_FIELD) as string,
-        date: r.get(this.TX_DATE_FIELD) as string,
-        amount: r.get(this.TX_AMOUNT_FIELD) as number,
-        description: String(r.get(this.TX_DESCRIPTION_FIELD) ?? ''),
-        source: String(source),
-        userId: r.get(this.TX_USER_ID_FIELD) as string,
-        status: r.get(this.TX_STATUS_FIELD) as string,
-      };
-    });
+    return records.map((r: any) => ({
+      id: r.id,
+      hash: r.get(this.TX_HASH_FIELD) as string,
+      date: r.get(this.TX_DATE_FIELD) as string,
+      amount: r.get(this.TX_AMOUNT_FIELD) as number,
+      description: String(r.get(this.TX_DESCRIPTION_FIELD) ?? ''),
+      source: this.normalizeSource(r),
+      userId: r.get(this.TX_USER_ID_FIELD) as string,
+      status: r.get(this.TX_STATUS_FIELD) as string,
+    }));
   }
 
   /**
@@ -197,15 +254,23 @@ export class AirtableHelper {
       .all();
 
     return records.map((r: any) => {
-      // Normalize categoryId - can be array or single value
-      const categoryIdArray = r.get(this.RULE_CATEGORY_FIELD);
+      // Convert Hebrew type to English first (needed to determine which category field to read)
+      const typeHebrew = r.get(this.RULE_TYPE_FIELD) as string;
+      const type = typeHebrew === 'הוצאה' ? 'expense' : 'income';
+
+      // Read category from the correct field based on type
+      // Income rules → קטגוריית הכנסה (links to מקורות הכנסה)
+      // Expense rules → קטגוריית הוצאה (links to מקורות הוצאה)
+      const categoryField = type === 'income' ? this.RULE_INCOME_CATEGORY_FIELD : this.RULE_EXPENSE_CATEGORY_FIELD;
+      const categoryIdArray = r.get(categoryField);
       const categoryId = Array.isArray(categoryIdArray)
         ? categoryIdArray[0]
         : categoryIdArray;
 
-      // Convert Hebrew type to English
-      const typeHebrew = r.get(this.RULE_TYPE_FIELD) as string;
-      const type = typeHebrew === 'הוצאה' ? 'expense' : 'income';
+      const overrideAmountRaw = r.get(this.RULE_OVERRIDE_AMOUNT_FIELD);
+      const overrideAmount = typeof overrideAmountRaw === 'number' && overrideAmountRaw > 0
+        ? overrideAmountRaw
+        : undefined;
 
       return {
         id: r.id,
@@ -216,6 +281,7 @@ export class AirtableHelper {
         confidence: r.get(this.RULE_CONFIDENCE_FIELD) as 'אוטומטי' | 'מאושר',
         timesUsed: r.get(this.RULE_TIMES_USED_FIELD) as number || 0,
         createdBy: r.get(this.RULE_CREATED_BY_FIELD) as string,
+        overrideAmount,
       };
     });
   }
@@ -233,9 +299,12 @@ export class AirtableHelper {
     // Convert English type to Hebrew for Airtable
     const typeHebrew = type === 'income' ? 'הכנסה' : 'הוצאה';
 
+    // Write category to the correct field based on type
+    const categoryField = type === 'income' ? this.RULE_INCOME_CATEGORY_FIELD : this.RULE_EXPENSE_CATEGORY_FIELD;
+
     const record = await this.base(this.CLASSIFICATION_RULES_TABLE).create({
       [this.RULE_PATTERN_FIELD]: pattern,
-      [this.RULE_CATEGORY_FIELD]: [categoryId], // Link field - must be array
+      [categoryField]: [categoryId], // Link field - must be array, in the correct table-specific field
       [this.RULE_ENTITY_FIELD]: entity,
       [this.RULE_TYPE_FIELD]: typeHebrew,
       [this.RULE_CONFIDENCE_FIELD]: 'אוטומטי',
@@ -299,18 +368,24 @@ export class AirtableHelper {
         )`;
       } else {
         // For expense, filter by "עסקי/בית" field
+        // Map entity: "עסק תום"/"עסק יעל"/"עסק - משותף" → "עסקי", "בית" → "בית"
+        const mappedEntity = this.mapEntityForExpense(entity);
         filterFormula = `AND(
           {${statusField}} = 'פעיל',
-          {${this.EXPENSE_BUSINESS_HOME_FIELD}} = '${entity}'
+          {${this.EXPENSE_BUSINESS_HOME_FIELD}} = '${mappedEntity}'
         )`;
       }
     }
 
+    // Note: expense nameField is "תיאור/הערות" (Long Text) which Airtable cannot sort by.
+    // Only add sort for income categories where nameField is a sortable Single Line Text.
+    const selectOptions: any = { filterByFormula: filterFormula };
+    if (type === 'income') {
+      selectOptions.sort = [{ field: nameField, direction: 'asc' }];
+    }
+
     const records = await this.base(tableName)
-      .select({
-        filterByFormula: filterFormula,
-        sort: [{ field: nameField, direction: 'asc' }]
-      })
+      .select(selectOptions)
       .all();
 
     return records.map((r: any) => ({
@@ -322,15 +397,50 @@ export class AirtableHelper {
   }
 
   /**
+   * חיפוש הכנסה קיימת לפי סכום ותאריך
+   * משמש למניעת כפילות כשחשבונית כבר נרשמה ידנית (למשל דרך Sumit)
+   *
+   * @param amount סכום חיובי
+   * @param date תאריך YYYY-MM-DD
+   * @returns ID של הרשומה הקיימת, או null אם לא נמצאה
+   */
+  async findExistingIncomeRecord(amount: number, date: string): Promise<string | null> {
+    try {
+      // חיפוש מדויק לפי סכום ותאריך
+      const records = await this.base(this.INCOME_TABLE)
+        .select({
+          filterByFormula: `AND(
+            {${this.INCOME_DATE_FIELD}} = '${date}',
+            {${this.INCOME_AMOUNT_FIELD}} = ${amount}
+          )`,
+          maxRecords: 1
+        })
+        .all();
+
+      if (records.length > 0) {
+        console.log(`  🔍 Found existing income record: ${records[0].id} (₪${amount}, ${date})`);
+        return records[0].id;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('  ⚠️ Error checking existing income records:', error);
+      return null; // Don't block classification on lookup failure
+    }
+  }
+
+  /**
    * שליפת תנועה בודדת לפי ID
    */
   async getTransactionById(transactionId: string): Promise<Transaction | null> {
     try {
       const record = await this.base(this.TRANSACTIONS_TABLE).find(transactionId);
 
-      // Source is a Link field (returns array of record IDs), extract first value
-      const sourceVal = record.get(this.TX_SOURCE_FIELD);
-      const source = Array.isArray(sourceVal) ? (sourceVal[0] || '') : (sourceVal || '');
+      // Read linked record array - take first element if exists
+      const linkedRecordArray = record.get(this.TX_LINKED_RECORD_FIELD) as string[] | undefined;
+      const linkedRecordId = Array.isArray(linkedRecordArray) && linkedRecordArray.length > 0
+        ? linkedRecordArray[0]
+        : undefined;
 
       return {
         id: record.id,
@@ -338,9 +448,10 @@ export class AirtableHelper {
         date: record.get(this.TX_DATE_FIELD) as string,
         amount: record.get(this.TX_AMOUNT_FIELD) as number,
         description: String(record.get(this.TX_DESCRIPTION_FIELD) ?? ''),
-        source: String(source),
+        source: this.normalizeSource(record),
         userId: record.get(this.TX_USER_ID_FIELD) as string,
         status: record.get(this.TX_STATUS_FIELD) as string,
+        linkedRecordId,
       };
     } catch (error) {
       console.error(`Transaction not found: ${transactionId}`, error);

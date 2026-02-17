@@ -41,6 +41,30 @@ ${type}: ₪${amount}
 }
 
 /**
+ * הודעת תנועה של אפליקציית תשלום (ביט/פייבוקס/הפועלים)
+ * אזהרה: לא ליצור חוק קבוע - האפליקציה לא מזהה את ה-entity
+ */
+export function formatPaymentAppTransactionMessage(transaction: Transaction): string {
+  const date = format(parseISO(transaction.date), 'dd/MM/yyyy', { locale: he });
+  const amount = Math.abs(transaction.amount).toFixed(2);
+
+  return `
+🔔 *תנועה חדשה לסיווג*
+
+💰 הכנסה: ₪${amount}
+📅 תאריך: ${date}
+🏦 מקור: ${escapeMarkdown(transaction.source)}
+📝 תיאור: ${escapeMarkdown(transaction.description)}
+
+⚠️ *נראה שזו הכנסה דרך אפליקציית תשלום* \\(ביט/פייבוקס/הפועלים\\)
+אם יש חשבונית מתאימה, היא כבר רשומה בטבלת ההכנסות\\.
+*לא מומלץ ליצור חוק קבוע* לתנועה זו\\.
+
+אנא בחר קטגוריה:
+  `.trim();
+}
+
+/**
  * הודעת סיווג מוצלח
  */
 export function formatClassificationSuccess(

@@ -27,6 +27,20 @@ export class Classifier {
   }
 
   /**
+   * רשימת מילות מפתח של אפליקציות תשלום
+   * תנועות אלה עוטפות הכנסה אמיתית - לא ליצור חוק קבוע
+   */
+  static readonly PAYMENT_APP_KEYWORDS = ['ביט', 'bit', 'פייבוקס', 'paybox', 'הפועלים'];
+
+  /**
+   * בדיקה אם תיאור תנועה שייך לאפליקציית תשלום
+   */
+  static isPaymentApp(description: string): boolean {
+    const lower = description.toLowerCase();
+    return Classifier.PAYMENT_APP_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()));
+  }
+
+  /**
    * סיווג תנועה בודדת
    * מנסה את כל השכבות לפי סדר עדיפות
    */
@@ -34,6 +48,33 @@ export class Classifier {
     console.log(`\n🔍 Classifying transaction: ${transaction.description} (₪${transaction.amount})`);
 
     try {
+      // Layer 0: Check if income already recorded (prevent duplicates)
+      // כשמנפיקים חשבונית, ההכנסה כבר בטבלת הכנסות - לא ליצור רשומה כפולה
+      if (transaction.amount > 0) {
+        const existingRecordId = await this.airtableHelper.findExistingIncomeRecord(
+          Math.abs(transaction.amount),
+          transaction.date
+        );
+
+        if (existingRecordId) {
+          console.log(`  ✅ Income already recorded in income table - linking and skipping`);
+          await this.airtableHelper.updateTransactionStatus(
+            transaction.id,
+            'סווג אוטומטית',
+            existingRecordId,
+            null
+          );
+          return {
+            success: true,
+            method: 'already_recorded',
+            category: null,
+            entity: null,
+            confidence: 'מאושר',
+            metadata: { existingRecordId, alreadyRecorded: true }
+          };
+        }
+      }
+
       // Layer 1: Try Sumit API (only for income)
       if (transaction.amount > 0 && this.sumitClient.isEnabled()) {
         const sumitResult = await this.trySumit(transaction);
@@ -239,6 +280,7 @@ export class Classifier {
       }
 
       // Create record (income or expense)
+      // עבור חוקים עם overrideAmount (למשל 019, Cloudways) - רשום את הסכום המוגדר
       let recordId: string;
       if (rule.type === 'income') {
         recordId = await this.airtableHelper.createIncomeRecord(
@@ -252,7 +294,8 @@ export class Classifier {
           transaction,
           rule.categoryId,
           rule.entity,
-          'rule'
+          'rule',
+          rule.overrideAmount
         );
       }
 

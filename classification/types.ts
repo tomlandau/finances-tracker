@@ -6,7 +6,7 @@
 
 export interface ClassificationResult {
   success: boolean;
-  method: 'sumit' | 'client_match' | 'rule' | 'manual' | 'failed';
+  method: 'sumit' | 'client_match' | 'rule' | 'manual' | 'already_recorded' | 'failed';
   category: {
     id: string;
     name: string;
@@ -27,6 +27,7 @@ export interface Transaction {
   source: string;        // Account name
   userId: string;        // usr_tom_001 / usr_yael_001
   status: string;
+  linkedRecordId?: string;  // ID of linked income/expense record (if already classified)
 }
 
 export interface ClassificationRule {
@@ -38,6 +39,8 @@ export interface ClassificationRule {
   confidence: 'אוטומטי' | 'מאושר';
   timesUsed: number;
   createdBy: string;
+  overrideAmount?: number;   // סכום מוגדר - שדה אופציונלי לדריסת הסכום האמיתי (למשל 019, Cloudways)
+  isPaymentApp?: boolean;    // סימון לחוקים שנוצרו מאפליקציות תשלום - לא להשתמש כחוק קבוע
 }
 
 export interface SumitInvoice {

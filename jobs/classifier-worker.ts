@@ -3,7 +3,7 @@ import { Classifier } from '../classification/classifier';
 import { sendTelegramNotification } from '../lib/utils-telegram';
 import { getTelegramBot } from '../telegram/bot';
 import { buildInitialClassificationKeyboard } from '../telegram/keyboards';
-import { formatTransactionMessage, formatHourlySummary, formatClassifierError } from '../telegram/messages';
+import { formatTransactionMessage, formatPaymentAppTransactionMessage, formatHourlySummary, formatClassifierError } from '../telegram/messages';
 import type { Transaction } from '../classification/types';
 
 /**
@@ -158,7 +158,13 @@ async function runClassifierWorker(): Promise<void> {
 async function sendClassificationRequest(transaction: Transaction): Promise<void> {
   try {
     const bot = getTelegramBot();
-    const message = formatTransactionMessage(transaction);
+
+    // Detect payment app transactions - show different message
+    const isPaymentApp = Classifier.isPaymentApp(transaction.description);
+    const message = isPaymentApp
+      ? formatPaymentAppTransactionMessage(transaction)
+      : formatTransactionMessage(transaction);
+
     const keyboard = buildInitialClassificationKeyboard(transaction.id, transaction.amount);
 
     // Determine chat ID based on user
@@ -171,7 +177,11 @@ async function sendClassificationRequest(transaction: Transaction): Promise<void
       reply_markup: keyboard
     });
 
-    console.log(`  📤 Sent classification request to ${transaction.userId}`);
+    if (isPaymentApp) {
+      console.log(`  📤 Sent payment app classification request to ${transaction.userId}`);
+    } else {
+      console.log(`  📤 Sent classification request to ${transaction.userId}`);
+    }
 
   } catch (error) {
     console.error('❌ Failed to send classification request:', error);
