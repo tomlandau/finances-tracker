@@ -14,6 +14,9 @@ import { getEntityEmoji, getTypeEmoji } from './keyboards';
  * Prevents parsing errors when transaction descriptions contain *, _, [, etc.
  */
 function escapeMarkdown(text: string): string {
+  if (typeof text !== 'string') {
+    text = String(text ?? '');
+  }
   return text.replace(/([*_\[\]()~`>#+=|{}.!\\-])/g, '\\$1');
 }
 
