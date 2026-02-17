@@ -193,13 +193,44 @@ export class ScraperManager {
   }
 
   /**
+   * בדיקה האם תנועה צריכה להיות מסוננת (מתעלמים ממנה לחלוטין)
+   *
+   * א. "חיוב זמני למפתח מזומן" - חיוב זמני שנוצר ונמחק, לא רלוונטי
+   * ב. "חיוב לכרטיס ..." - חיוב עתידי לכרטיס אשראי כפי שנראה בבנק,
+   *    לא רלוונטי כי אנחנו סורקים את כרטיסי האשראי ישירות
+   */
+  private shouldIgnoreTransaction(description: string): boolean {
+    const desc = description.trim();
+
+    // חיוב זמני למפתח מזומן
+    if (desc.includes('חיוב זמני למפתח מזומן')) {
+      return true;
+    }
+
+    // חיוב עתידי לכרטיס אשראי (כל חברה/מספר)
+    if (desc.startsWith('חיוב לכרטיס')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * נרמול תנועות מהסקרייפר לפורמט שלנו
    */
   private normalizeTransactions(
     txns: ScrapedTransaction[],
     bankCreds: BankCredentials
   ): NormalizedTransaction[] {
-    return txns.map(txn => {
+    const filtered = txns.filter(txn => {
+      if (this.shouldIgnoreTransaction(txn.description)) {
+        console.log(`  🚫 Ignoring transaction: "${txn.description}"`);
+        return false;
+      }
+      return true;
+    });
+
+    return filtered.map(txn => {
       // המרת תאריך לפורמט YYYY-MM-DD
       const date = format(new Date(txn.date), 'yyyy-MM-dd');
 
