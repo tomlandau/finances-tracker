@@ -164,16 +164,22 @@ export class AirtableHelper {
       })
       .all();
 
-    return records.map((r: any) => ({
-      id: r.id,
-      hash: r.get(this.TX_HASH_FIELD) as string,
-      date: r.get(this.TX_DATE_FIELD) as string,
-      amount: r.get(this.TX_AMOUNT_FIELD) as number,
-      description: r.get(this.TX_DESCRIPTION_FIELD) as string,
-      source: r.get(this.TX_SOURCE_FIELD) as string,
-      userId: r.get(this.TX_USER_ID_FIELD) as string,
-      status: r.get(this.TX_STATUS_FIELD) as string,
-    }));
+    return records.map((r: any) => {
+      // Source is a Link field (returns array of record IDs), extract first value
+      const sourceVal = r.get(this.TX_SOURCE_FIELD);
+      const source = Array.isArray(sourceVal) ? (sourceVal[0] || '') : (sourceVal || '');
+
+      return {
+        id: r.id,
+        hash: r.get(this.TX_HASH_FIELD) as string,
+        date: r.get(this.TX_DATE_FIELD) as string,
+        amount: r.get(this.TX_AMOUNT_FIELD) as number,
+        description: String(r.get(this.TX_DESCRIPTION_FIELD) ?? ''),
+        source: String(source),
+        userId: r.get(this.TX_USER_ID_FIELD) as string,
+        status: r.get(this.TX_STATUS_FIELD) as string,
+      };
+    });
   }
 
   /**
@@ -322,13 +328,17 @@ export class AirtableHelper {
     try {
       const record = await this.base(this.TRANSACTIONS_TABLE).find(transactionId);
 
+      // Source is a Link field (returns array of record IDs), extract first value
+      const sourceVal = record.get(this.TX_SOURCE_FIELD);
+      const source = Array.isArray(sourceVal) ? (sourceVal[0] || '') : (sourceVal || '');
+
       return {
         id: record.id,
         hash: record.get(this.TX_HASH_FIELD) as string,
         date: record.get(this.TX_DATE_FIELD) as string,
         amount: record.get(this.TX_AMOUNT_FIELD) as number,
-        description: record.get(this.TX_DESCRIPTION_FIELD) as string,
-        source: record.get(this.TX_SOURCE_FIELD) as string,
+        description: String(record.get(this.TX_DESCRIPTION_FIELD) ?? ''),
+        source: String(source),
         userId: record.get(this.TX_USER_ID_FIELD) as string,
         status: record.get(this.TX_STATUS_FIELD) as string,
       };
