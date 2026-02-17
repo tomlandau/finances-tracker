@@ -131,15 +131,20 @@ export class AirtableHelper {
   async createIncomeRecord(
     transaction: Transaction,
     categoryId: string,
-    _entity: string,
-    source: 'sumit' | 'client' | 'rule' | 'manual'
+    entity: string,
+    source: 'sumit' | 'client' | 'rule' | 'manual',
+    vatIncluded?: boolean
   ): Promise<string> {
+    // vatIncluded מגיע מ-Sumit ישירות (אם זמין), אחרת לוגיקת ברירת מחדל:
+    // רק לקוחות תום כוללים מע"מ; יעל + שאר המקורות — ללא מע"מ
+    const resolvedVatIncluded = vatIncluded ?? (source === 'client' && entity === 'עסק תום');
+    const vatType = resolvedVatIncluded ? 'כולל מע"מ' : 'לפני/ללא מע"מ';
     const record = await this.base(this.INCOME_TABLE).create({
       [this.INCOME_DATE_FIELD]: transaction.date,
       [this.INCOME_CATEGORY_FIELD]: [categoryId], // Link field - must be array
       [this.INCOME_AMOUNT_FIELD]: Math.abs(transaction.amount),
       [this.INCOME_DESCRIPTION_FIELD]: `${transaction.description} (סווג: ${source})`,
-      [this.INCOME_VAT_TYPE_FIELD]: 'ללא מע"מ',
+      [this.INCOME_VAT_TYPE_FIELD]: vatType,
     });
 
     console.log(`  ✅ Created income record: ${record.id} (${source})`);
@@ -163,7 +168,7 @@ export class AirtableHelper {
       [this.EXPENSE_CATEGORY_FIELD]: [categoryId], // Link field - must be array
       [this.EXPENSE_AMOUNT_FIELD]: amount,
       [this.EXPENSE_DESCRIPTION_FIELD]: `${transaction.description} (סווג: ${source})`,
-      [this.EXPENSE_VAT_TYPE_FIELD]: 'ללא מע"מ',
+      [this.EXPENSE_VAT_TYPE_FIELD]: 'לפני/ללא מע"מ',
     });
 
     if (overrideAmount !== undefined) {
