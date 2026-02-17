@@ -49,6 +49,7 @@ export interface SumitInvoice {
   amount: number;
   customerName: string;
   description: string;
+  vatIncluded: boolean;  // האם הסכום כולל מע"מ (מגיע ישירות מ-Sumit)
 }
 
 export interface ClientRecord {

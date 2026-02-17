@@ -132,9 +132,13 @@ export class AirtableHelper {
     transaction: Transaction,
     categoryId: string,
     entity: string,
-    source: 'sumit' | 'client' | 'rule' | 'manual'
+    source: 'sumit' | 'client' | 'rule' | 'manual',
+    vatIncluded?: boolean
   ): Promise<string> {
-    const vatType = source === 'client' && entity === 'עסק תום' ? 'כולל מע"מ' : 'לפני/ללא מע"מ';
+    // vatIncluded מגיע מ-Sumit ישירות (אם זמין), אחרת לוגיקת ברירת מחדל:
+    // רק לקוחות תום כוללים מע"מ; יעל + שאר המקורות — ללא מע"מ
+    const resolvedVatIncluded = vatIncluded ?? (source === 'client' && entity === 'עסק תום');
+    const vatType = resolvedVatIncluded ? 'כולל מע"מ' : 'לפני/ללא מע"מ';
     const record = await this.base(this.INCOME_TABLE).create({
       [this.INCOME_DATE_FIELD]: transaction.date,
       [this.INCOME_CATEGORY_FIELD]: [categoryId], // Link field - must be array

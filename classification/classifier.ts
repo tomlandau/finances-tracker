@@ -153,12 +153,13 @@ export class Classifier {
       // Use first category (or implement logic to choose based on invoice metadata)
       const category = categories[0];
 
-      // Create income record
+      // Create income record - העבר vatIncluded ישירות מה-Sumit invoice
       const recordId = await this.airtableHelper.createIncomeRecord(
         transaction,
         category.id,
         entity,
-        'sumit'
+        'sumit',
+        invoice.vatIncluded
       );
 
       // Update transaction status

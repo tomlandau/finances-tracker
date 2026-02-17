@@ -80,7 +80,25 @@ export class SumitClient {
       // });
       //
       // const invoices = await response.json();
-      // return this.findBestMatch(invoices, description);
+      // const matched = this.findBestMatch(invoices, description);
+      // if (!matched) return null;
+      //
+      // פרסור שדה מע"מ מה-API של Sumit:
+      // כל חשבונית/קבלה ב-Sumit מכילה שדה המציין אם הסכום כולל מע"מ.
+      // שם השדה המדויק צריך לאמת מול ה-API docs של Sumit, לדוגמה:
+      //   matched.vatType === 'inclusive'  → vatIncluded = true
+      //   matched.vatType === 'exclusive'  → vatIncluded = false
+      // או:
+      //   matched.includesVat === true/false
+      //
+      // return {
+      //   id: matched.id,
+      //   date: matched.date,
+      //   amount: matched.amount,
+      //   customerName: matched.customerName,
+      //   description: matched.description,
+      //   vatIncluded: matched.vatType === 'inclusive',  // ← לאמת מול Sumit API docs
+      // };
 
       // Stub: return null (no match)
       console.log(`  ⏸️ Sumit API stub - skipping (implementation pending)`);
