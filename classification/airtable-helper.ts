@@ -131,10 +131,10 @@ export class AirtableHelper {
   async createIncomeRecord(
     transaction: Transaction,
     categoryId: string,
-    _entity: string,
+    entity: string,
     source: 'sumit' | 'client' | 'rule' | 'manual'
   ): Promise<string> {
-    const vatType = source === 'client' ? 'כולל מע"מ' : 'לפני/ללא מע"מ';
+    const vatType = source === 'client' && entity === 'עסק תום' ? 'כולל מע"מ' : 'לפני/ללא מע"מ';
     const record = await this.base(this.INCOME_TABLE).create({
       [this.INCOME_DATE_FIELD]: transaction.date,
       [this.INCOME_CATEGORY_FIELD]: [categoryId], // Link field - must be array
