@@ -75,6 +75,34 @@ export class Classifier {
         }
       }
 
+      // Layer 0b: Check if expense already recorded (prevent duplicates for manual/recurring entries)
+      // כשמזינים הוצאה ידנית או כשיש הוצאה מחזורית מוגדרת - לא לבקש סיווג מחדש
+      if (transaction.amount < 0) {
+        const existingExpenseId = await this.airtableHelper.findExistingExpenseRecord(
+          Math.abs(transaction.amount),
+          transaction.date
+        );
+
+        if (existingExpenseId) {
+          console.log(`  ✅ Expense already recorded in expense table - updating amount and linking`);
+          await this.airtableHelper.updateExpenseAmount(existingExpenseId, Math.abs(transaction.amount));
+          await this.airtableHelper.updateTransactionStatus(
+            transaction.id,
+            'סווג אוטומטית',
+            existingExpenseId,
+            null
+          );
+          return {
+            success: true,
+            method: 'already_recorded',
+            category: null,
+            entity: null,
+            confidence: 'מאושר',
+            metadata: { existingExpenseId, alreadyRecorded: true }
+          };
+        }
+      }
+
       // Layer 1: Try Sumit API (only for income)
       if (transaction.amount > 0 && this.sumitClient.isEnabled()) {
         const sumitResult = await this.trySumit(transaction);

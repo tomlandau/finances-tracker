@@ -435,6 +435,69 @@ export class AirtableHelper {
   }
 
   /**
+   * חיפוש הוצאה קיימת לפי סכום ותאריך (טווח ±5% ו-±5 ימים)
+   * משמש למניעת כפילות כשהוצאה כבר נרשמה ידנית או הוגדרה כהוצאה מחזורית
+   *
+   * @param amount סכום חיובי
+   * @param date תאריך YYYY-MM-DD
+   * @returns ID של הרשומה הקיימת, או null אם לא נמצאה
+   */
+  async findExistingExpenseRecord(amount: number, date: string): Promise<string | null> {
+    try {
+      const amountMin = amount * 0.95;
+      const amountMax = amount * 1.05;
+
+      const dateObj = new Date(date);
+      const dateMinObj = new Date(dateObj);
+      dateMinObj.setDate(dateMinObj.getDate() - 5);
+      const dateMaxObj = new Date(dateObj);
+      dateMaxObj.setDate(dateMaxObj.getDate() + 5);
+      const dateMinStr = dateMinObj.toISOString().split('T')[0];
+      const dateMaxStr = dateMaxObj.toISOString().split('T')[0];
+
+      const records = await this.base(this.EXPENSE_TABLE)
+        .select({
+          filterByFormula: `AND(
+            {${this.EXPENSE_DATE_FIELD}} >= '${dateMinStr}',
+            {${this.EXPENSE_DATE_FIELD}} <= '${dateMaxStr}',
+            {${this.EXPENSE_AMOUNT_FIELD}} >= ${amountMin},
+            {${this.EXPENSE_AMOUNT_FIELD}} <= ${amountMax}
+          )`,
+          maxRecords: 1
+        })
+        .all();
+
+      if (records.length > 0) {
+        console.log(`  🔍 Found existing expense record: ${records[0].id} (₪${amount}, ${date})`);
+        return records[0].id;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('  ⚠️ Error checking existing expense records:', error);
+      return null; // Don't block classification on lookup failure
+    }
+  }
+
+  /**
+   * עדכון סכום מדויק על רשומת הוצאה קיימת (לאחר התאמה לתנועת בנק)
+   *
+   * @param recordId ID של רשומת ההוצאה
+   * @param exactAmount הסכום המדויק מהסקרייפינג
+   */
+  async updateExpenseAmount(recordId: string, exactAmount: number): Promise<void> {
+    try {
+      await this.base(this.EXPENSE_TABLE).update(recordId, {
+        [this.EXPENSE_AMOUNT_FIELD]: exactAmount
+      });
+      console.log(`  ✅ Updated expense amount to ₪${exactAmount} for record ${recordId}`);
+    } catch (error) {
+      console.warn(`  ⚠️ Could not update expense amount for record ${recordId}:`, error);
+      // Non-blocking - classification still succeeds even if amount update fails
+    }
+  }
+
+  /**
    * שליפת תנועה בודדת לפי ID
    */
   async getTransactionById(transactionId: string): Promise<Transaction | null> {
