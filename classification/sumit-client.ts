@@ -90,9 +90,10 @@ export class SumitClient {
         body: JSON.stringify({
           Credentials: { CompanyID: config.companyId, APIKey: config.apiKey },
           DocumentTypes: [config.docType],
-          DateFrom: dateFrom,
-          DateTo: dateTo,
+          DateFrom: `${dateFrom}T00:00:00`,
+          DateTo: `${dateTo}T23:59:59`,
           IncludeDrafts: false,
+          Paging: null,
         }),
       });
 
