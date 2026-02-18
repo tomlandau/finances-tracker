@@ -155,7 +155,7 @@ if (process.env.NODE_ENV === 'production') {
     // Start daily scraper cron job (04:00 UTC)
     startDailyScraperJob();
 
-    // Start classifier worker cron job (hourly) - Phase 2
+    // Start classifier worker cron job (daily 07:00 Israel) - Phase 2
     startClassifierWorker();
 
     console.log('✅ Jobs and services initialized');

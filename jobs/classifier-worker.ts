@@ -7,7 +7,7 @@ import { formatTransactionMessage, formatPaymentAppTransactionMessage, formatHou
 import type { Transaction } from '../classification/types';
 
 /**
- * Classifier Worker - worker שרץ כל שעה ומסווג תנועות ממתינות
+ * Classifier Worker - worker שרץ כל יום ב-07:00 ומסווג תנועות ממתינות
  *
  * Flow:
  * 1. שליפת תנועות עם סטטוס "ממתין לסיווג"
@@ -20,13 +20,13 @@ let isRunning = false;
 
 /**
  * התחלת classifier worker
- * רץ כל שעה על השעה (:00)
+ * רץ כל יום ב-07:00 שעון ישראל
  */
 export function startClassifierWorker(): void {
-  console.log('⚙️ Scheduling classifier worker (hourly)...');
+  console.log('⚙️ Scheduling classifier worker (daily at 07:00 Israel)...');
 
-  // Run every hour at :00
-  cron.schedule('0 * * * *', async () => {
+  // Run every day at 07:00 Israel time
+  cron.schedule('0 7 * * *', async () => {
     // Prevent overlapping runs
     if (isRunning) {
       console.log('⚠️ Classifier worker already running, skipping this run');
@@ -45,9 +45,11 @@ export function startClassifierWorker(): void {
     } finally {
       isRunning = false;
     }
+  }, {
+    timezone: 'Asia/Jerusalem'
   });
 
-  console.log('✅ Classifier worker scheduled (runs every hour at :00)');
+  console.log('✅ Classifier worker scheduled (runs daily at 07:00 Israel time)');
 
   // Optional: Run once immediately on startup (for testing)
   if (process.env.NODE_ENV === 'development') {
