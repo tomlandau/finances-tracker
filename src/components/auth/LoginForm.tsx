@@ -19,7 +19,6 @@ import type { TwoFactorMethod } from '@/types/auth.types';
 
 export function LoginForm() {
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [setupMethod, setSetupMethod] = useState<TwoFactorMethod>(null);
@@ -39,20 +38,19 @@ export function LoginForm() {
     e.preventDefault();
     setError('');
 
-    if (!username || !password) {
-      setError('יש להזין שם משתמש וסיסמה');
+    if (!username) {
+      setError('יש להזין שם משתמש');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      await login(username, password);
+      await login(username);
       // If login succeeds, the AuthContext will update and handle the next steps
       // (showing TOTP input, setup, or logging in directly)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה בהתחברות');
-      setPassword('');
     } finally {
       setIsSubmitting(false);
     }
@@ -71,7 +69,6 @@ export function LoginForm() {
   const handleCancel = () => {
     // Reset to initial login state
     setUsername('');
-    setPassword('');
     setError('');
     setSetupMethod(null);
     setLoginMethod(null);
@@ -188,14 +185,6 @@ export function LoginForm() {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="הזן שם משתמש"
             autoFocus
-            disabled={isSubmitting}
-          />
-          <Input
-            type="password"
-            label="סיסמה"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="הזן סיסמה"
             disabled={isSubmitting}
           />
           <Button type="submit" fullWidth disabled={isSubmitting}>

@@ -30,11 +30,11 @@ function setAuthCookies(res: Response, userId: string, username: string): void {
     { expiresIn: '15m' }
   );
 
-  // Generate refresh token (7 days)
+  // Generate refresh token (30 days)
   const refreshToken = jwt.sign(
     { userId, tokenVersion: 1 },
     JWT_REFRESH_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: '30d' }
   );
 
   // Set httpOnly cookies
@@ -44,7 +44,7 @@ function setAuthCookies(res: Response, userId: string, username: string): void {
 
   res.setHeader('Set-Cookie', [
     `accessToken=${accessToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/; Max-Age=${15 * 60}; ${domain ? `Domain=${domain}` : ''}`,
-    `refreshToken=${refreshToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/api/auth/refresh; Max-Age=${7 * 24 * 60 * 60}; ${domain ? `Domain=${domain}` : ''}`
+    `refreshToken=${refreshToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/api/auth/refresh; Max-Age=${30 * 24 * 60 * 60}; ${domain ? `Domain=${domain}` : ''}`
   ]);
 }
 

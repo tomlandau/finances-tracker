@@ -14,7 +14,7 @@ export interface AuthState {
   requireSetup: boolean;
   hasTotp: boolean;
   hasWebAuthn: boolean;
-  login: (username: string, password: string) => Promise<LoginResult>;
+  login: (username: string) => Promise<LoginResult>;
   loginWithTotp: (tempToken: string, totpCode: string) => Promise<boolean>;
   loginWithWebAuthn: (tempToken: string) => Promise<boolean>;
   logout: () => Promise<void>;

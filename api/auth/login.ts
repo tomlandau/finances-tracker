@@ -5,7 +5,6 @@
  */
 
 import type { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { withErrorHandler, ApiError } from '../../lib/middleware-error';
 import { logAuditEvent, getClientIp } from '../../lib/utils-audit';
@@ -13,13 +12,11 @@ import { userHasWebAuthnCredentials } from '../../lib/utils-webauthn';
 
 interface LoginRequest {
   username: string;
-  password: string;
 }
 
 interface UserConfig {
   id: string;
   username: string;
-  passwordHash: string;
   totpSecret?: string;
 }
 
@@ -31,7 +28,6 @@ function getUserByUsername(username: string): UserConfig | null {
     return {
       id: process.env.AUTH_USER_TOM_ID!,
       username: process.env.AUTH_USER_TOM_USERNAME!,
-      passwordHash: process.env.AUTH_USER_TOM_PASSWORD_HASH!,
       totpSecret: process.env.AUTH_USER_TOM_TOTP_SECRET
     };
   }
@@ -39,7 +35,6 @@ function getUserByUsername(username: string): UserConfig | null {
     return {
       id: process.env.AUTH_USER_YAEL_ID!,
       username: process.env.AUTH_USER_YAEL_USERNAME!,
-      passwordHash: process.env.AUTH_USER_YAEL_PASSWORD_HASH!,
       totpSecret: process.env.AUTH_USER_YAEL_TOTP_SECRET
     };
   }
@@ -60,11 +55,11 @@ function setAuthCookies(res: Response, userId: string, username: string): void {
     { expiresIn: '15m' }
   );
 
-  // Generate refresh token (7 days)
+  // Generate refresh token (30 days)
   const refreshToken = jwt.sign(
     { userId, tokenVersion: 1 },
     JWT_REFRESH_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: '30d' }
   );
 
   // Set httpOnly cookies
@@ -75,7 +70,7 @@ function setAuthCookies(res: Response, userId: string, username: string): void {
 
   res.setHeader('Set-Cookie', [
     `accessToken=${accessToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/; Max-Age=${15 * 60}; ${domain ? `Domain=${domain}` : ''}`,
-    `refreshToken=${refreshToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/api/auth/refresh; Max-Age=${7 * 24 * 60 * 60}; ${domain ? `Domain=${domain}` : ''}`
+    `refreshToken=${refreshToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/api/auth/refresh; Max-Age=${30 * 24 * 60 * 60}; ${domain ? `Domain=${domain}` : ''}`
   ]);
 }
 
@@ -85,11 +80,11 @@ async function handler(req: Request, res: Response) {
     throw new ApiError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');
   }
 
-  const { username, password } = req.body as LoginRequest;
+  const { username } = req.body as LoginRequest;
 
   // Validation
-  if (!username || !password) {
-    throw new ApiError(400, 'Username and password required', 'MISSING_CREDENTIALS');
+  if (!username) {
+    throw new ApiError(400, 'Username required', 'MISSING_CREDENTIALS');
   }
 
   // Find user
@@ -104,23 +99,6 @@ async function handler(req: Request, res: Response) {
       success: false,
       ip: getClientIp(req),
       details: 'User not found'
-    });
-
-    throw new ApiError(401, 'Invalid credentials', 'INVALID_CREDENTIALS');
-  }
-
-  // Verify password
-  const isValid = await bcrypt.compare(password, user.passwordHash);
-  if (!isValid) {
-    // Log failed attempt
-    await logAuditEvent({
-      userId: user.id,
-      username: user.username,
-      action: 'login',
-      resource: 'auth',
-      success: false,
-      ip: getClientIp(req),
-      details: 'Invalid password'
     });
 
     throw new ApiError(401, 'Invalid credentials', 'INVALID_CREDENTIALS');

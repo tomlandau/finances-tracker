@@ -135,7 +135,7 @@ export default async function handler(
     const refreshToken = jwt.sign(
       { userId: decoded.userId, tokenVersion: 1 },
       JWT_REFRESH_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
 
     // Set httpOnly cookies
@@ -145,7 +145,7 @@ export default async function handler(
 
     res.setHeader('Set-Cookie', [
       `accessToken=${accessToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/; Max-Age=${15 * 60}; ${domain ? `Domain=${domain}` : ''}`,
-      `refreshToken=${refreshToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/api/auth/refresh; Max-Age=${7 * 24 * 60 * 60}; ${domain ? `Domain=${domain}` : ''}`
+      `refreshToken=${refreshToken}; HttpOnly; ${isProduction ? 'Secure;' : ''} SameSite=${sameSite}; Path=/api/auth/refresh; Max-Age=${30 * 24 * 60 * 60}; ${domain ? `Domain=${domain}` : ''}`
     ]);
 
     // Log successful login

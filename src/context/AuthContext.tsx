@@ -22,6 +22,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     verify();
   }, []);
 
+  // Auto-refresh access token every 14 minutes while authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const intervalId = setInterval(() => {
+      refresh();
+    }, 14 * 60 * 1000);
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated]);
+
   const verify = async () => {
     try {
       const response = await fetch(`${API_BASE}/auth/verify`, {
@@ -32,6 +41,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
+      } else if (response.status === 401) {
+        // Access token expired - try refresh before logging out
+        const refreshResponse = await fetch(`${API_BASE}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (refreshResponse.ok) {
+          const retryResponse = await fetch(`${API_BASE}/auth/verify`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+          if (retryResponse.ok) {
+            const data = await retryResponse.json();
+            setUser(data.user);
+          } else {
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
@@ -43,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (username: string, password: string): Promise<LoginResult> => {
+  const login = async (username: string): Promise<LoginResult> => {
     try {
       const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
@@ -51,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username }),
       });
 
       if (!response.ok) {
