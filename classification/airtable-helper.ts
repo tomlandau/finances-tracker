@@ -60,6 +60,7 @@ export class AirtableHelper {
   private readonly RULE_TIMES_USED_FIELD = process.env.AIRTABLE_RULE_TIMES_USED_FIELD || 'מספר שימושים';
   private readonly RULE_CREATED_BY_FIELD = process.env.AIRTABLE_RULE_CREATED_BY_FIELD || 'נוצר על ידי';
   private readonly RULE_OVERRIDE_AMOUNT_FIELD = process.env.AIRTABLE_RULE_OVERRIDE_AMOUNT_FIELD || 'סכום מוגדר';
+  private readonly RULE_IGNORE_FIELD = process.env.AIRTABLE_RULE_IGNORE_FIELD || 'התעלם';
   // private readonly RULE_DESCRIPTION_FIELD = process.env.AIRTABLE_RULE_DESCRIPTION_FIELD || 'תיאור';
 
   constructor() {
@@ -277,6 +278,8 @@ export class AirtableHelper {
         ? overrideAmountRaw
         : undefined;
 
+      const isIgnoreRule = r.get(this.RULE_IGNORE_FIELD) === true;
+
       return {
         id: r.id,
         pattern: r.get(this.RULE_PATTERN_FIELD) as string,
@@ -287,6 +290,7 @@ export class AirtableHelper {
         timesUsed: r.get(this.RULE_TIMES_USED_FIELD) as number || 0,
         createdBy: r.get(this.RULE_CREATED_BY_FIELD) as string,
         overrideAmount,
+        isIgnoreRule: isIgnoreRule || undefined,
       };
     });
   }
@@ -318,6 +322,36 @@ export class AirtableHelper {
     });
 
     console.log(`  ✅ Created rule: ${pattern} → ${entity} (${typeHebrew})`);
+    return record.id;
+  }
+
+  /**
+   * יצירת חוק התעלמות קבוע מתיאור תנועה
+   * תנועות עתידיות שיתאימו לתבנית יסומנו אוטומטית כ"התעלם"
+   *
+   * @param description תיאור התנועה המקורית
+   * @param userId מזהה המשתמש שיצר את החוק
+   * @returns ID של החוק החדש
+   */
+  async createIgnoreRule(description: string, userId: string): Promise<string> {
+    // Extract a reasonable pattern from description (remove numbers/dates)
+    const pattern = description
+      .trim()
+      .replace(/\d{1,2}\/\d{1,2}(\/\d{2,4})?/g, '')
+      .replace(/₪?\s*\d+(\.\d+)?\s*₪?/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 50); // Cap at 50 chars
+
+    const record = await this.base(this.CLASSIFICATION_RULES_TABLE).create({
+      [this.RULE_PATTERN_FIELD]: pattern,
+      [this.RULE_IGNORE_FIELD]: true,
+      [this.RULE_CONFIDENCE_FIELD]: 'מאושר',
+      [this.RULE_TIMES_USED_FIELD]: 0,
+      [this.RULE_CREATED_BY_FIELD]: userId,
+    });
+
+    console.log(`  ✅ Created ignore rule: "${pattern}" (${record.id})`);
     return record.id;
   }
 

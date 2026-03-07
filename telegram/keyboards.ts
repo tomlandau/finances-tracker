@@ -233,6 +233,32 @@ export function buildIgnoreConfirmationKeyboard(
 }
 
 /**
+ * מקלדת הצעה ליצירת חוק התעלמות קבוע
+ * מוצגת אחרי שמשתמש לוחץ "התעלם" ידנית
+ *
+ * @param transactionId ID התנועה
+ * @returns inline keyboard markup
+ */
+export function buildCreateIgnoreRuleKeyboard(
+  transactionId: string
+): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: '✅ כן, צור חוק קבוע',
+          callback_data: `create_ignore_rule:${transactionId}`
+        },
+        {
+          text: '❌ לא תודה',
+          callback_data: `skip_ignore_rule:${transactionId}`
+        }
+      ]
+    ]
+  };
+}
+
+/**
  * Helper: המרת entity לאמוג'י
  */
 export function getEntityEmoji(entity: string): string {

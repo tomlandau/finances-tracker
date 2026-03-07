@@ -45,10 +45,14 @@ export class RulesEngine {
       const normalizedDescription = description.toLowerCase().trim();
 
       // Find matching rules
-      // Priority: מאושר confidence first, then by times used
+      // Priority: ignore rules first, then מאושר confidence, then by times used
       const matchingRules = rules
         .filter(rule => this.isMatch(normalizedDescription, rule.pattern))
         .sort((a, b) => {
+          // Ignore rules always win
+          if (!!a.isIgnoreRule !== !!b.isIgnoreRule) {
+            return a.isIgnoreRule ? -1 : 1;
+          }
           // Sort by confidence (מאושר > אוטומטי)
           if (a.confidence !== b.confidence) {
             return a.confidence === 'מאושר' ? -1 : 1;

@@ -93,6 +93,23 @@ export function formatIgnoreMessage(): string {
 }
 
 /**
+ * הצעה ליצירת חוק התעלמות קבוע
+ */
+export function formatIgnoreRuleOffer(description: string): string {
+  return `🚫 *התנועה סומנה להתעלמות*
+
+האם ליצור חוק קבוע?
+הודעות עם תיאור דומה ל\\-"${escapeMarkdown(description)}" יסוננו אוטומטית בעתיד\\.`;
+}
+
+/**
+ * הודעת אישור יצירת חוק התעלמות
+ */
+export function formatIgnoreRuleCreated(): string {
+  return '🚫 *התנועה סומנה להתעלמות*\n\n📝 חוק התעלמות קבוע נוצר\\. תנועות דומות יסוננו אוטומטית\\.';
+}
+
+/**
  * הודעת אישור התעלמות
  */
 export function formatIgnoreConfirmation(transaction: Transaction): string {

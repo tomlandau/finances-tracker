@@ -299,7 +299,22 @@ export class Classifier {
         return null;
       }
 
-      console.log(`  ✅ Matched rule: "${rule.pattern}" → ${rule.entity} (${rule.type})`);
+      console.log(`  ✅ Matched rule: "${rule.pattern}" → ${rule.isIgnoreRule ? 'IGNORE' : `${rule.entity} (${rule.type})`}`);
+
+      // Ignore rule: mark as התעלם without creating any record
+      if (rule.isIgnoreRule) {
+        await this.airtableHelper.updateTransactionStatus(transaction.id, 'התעלם', null, rule.id);
+        await this.rulesEngine.incrementRuleUsage(rule.id);
+        return {
+          success: true,
+          method: 'ignored',
+          category: null,
+          entity: null,
+          confidence: 'מאושר',
+          ruleId: rule.id,
+          metadata: { pattern: rule.pattern }
+        };
+      }
 
       // Get category details
       const category = await this.airtableHelper.getCategoryById(rule.categoryId, rule.type);

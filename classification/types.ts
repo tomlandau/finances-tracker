@@ -6,7 +6,7 @@
 
 export interface ClassificationResult {
   success: boolean;
-  method: 'sumit' | 'client_match' | 'rule' | 'manual' | 'already_recorded' | 'failed';
+  method: 'sumit' | 'client_match' | 'rule' | 'manual' | 'already_recorded' | 'ignored' | 'failed';
   category: {
     id: string;
     name: string;
@@ -41,6 +41,7 @@ export interface ClassificationRule {
   createdBy: string;
   overrideAmount?: number;   // סכום מוגדר - שדה אופציונלי לדריסת הסכום האמיתי (למשל 019, Cloudways)
   isPaymentApp?: boolean;    // סימון לחוקים שנוצרו מאפליקציות תשלום - לא להשתמש כחוק קבוע
+  isIgnoreRule?: boolean;    // חוק התעלמות - תנועות מתאימות יסומנו "התעלם" אוטומטית
 }
 
 export interface SumitInvoice {

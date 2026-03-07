@@ -4,11 +4,14 @@ import { Classifier } from '../classification/classifier';
 import {
   buildInitialClassificationKeyboard,
   buildCategoryKeyboard,
-  buildIgnoreConfirmationKeyboard
+  buildIgnoreConfirmationKeyboard,
+  buildCreateIgnoreRuleKeyboard
 } from './keyboards';
 import {
   formatClassificationSuccess,
   formatIgnoreMessage,
+  formatIgnoreRuleOffer,
+  formatIgnoreRuleCreated,
   formatIgnoreConfirmation,
   formatError,
   formatCategoryNotFound,
@@ -31,6 +34,9 @@ import { logSuccess } from '../lib/utils-audit';
 
 // Cache for storing flow state (transactionId → {type, entity})
 const flowState = new Map<string, { type: 'income' | 'expense'; entity: string }>();
+
+// Cache for ignore flow: transactionId → transaction description
+const ignoreFlowState = new Map<string, string>();
 
 export async function handleCallbackQuery(query: CallbackQuery): Promise<void> {
   const bot = getTelegramBot();
@@ -71,6 +77,14 @@ export async function handleCallbackQuery(query: CallbackQuery): Promise<void> {
 
       case 'back_to_categories':
         await handleBackToCategoriesAction(query, params);
+        break;
+
+      case 'create_ignore_rule':
+        await handleCreateIgnoreRuleAction(query, params);
+        break;
+
+      case 'skip_ignore_rule':
+        await handleSkipIgnoreRuleAction(query, params);
         break;
 
       case 'page':
@@ -296,26 +310,20 @@ async function handleConfirmIgnoreAction(query: CallbackQuery, params: string[])
 
   console.log(`  → Confirm ignore: ${transactionId}`);
 
-  // Update transaction status to "התעלם"
   const { AirtableHelper } = await import('../classification/airtable-helper');
   const airtableHelper = new AirtableHelper();
 
-  await airtableHelper.updateTransactionStatus(
-    transactionId,
-    'התעלם',
-    null,
-    null
-  );
+  // Fetch transaction description before marking as ignored (for ignore rule offer)
+  const transaction = await airtableHelper.getTransactionById(transactionId);
+  const description = transaction?.description || '';
 
-  // Update message
-  await bot.editMessageText(
-    formatIgnoreMessage(),
-    {
-      chat_id: chatId,
-      message_id: messageId,
-      parse_mode: 'Markdown'
-    }
-  );
+  // Update transaction status to "התעלם"
+  await airtableHelper.updateTransactionStatus(transactionId, 'התעלם', null, null);
+
+  // Store description for potential ignore rule creation
+  if (description) {
+    ignoreFlowState.set(transactionId, description);
+  }
 
   // Clean up flow state
   flowState.delete(transactionId);
@@ -332,9 +340,90 @@ async function handleConfirmIgnoreAction(query: CallbackQuery, params: string[])
     method: 'telegram'
   });
 
-  await bot.answerCallbackQuery(query.id, {
-    text: '✅ התעלם'
-  });
+  // Offer to create a permanent ignore rule
+  if (description) {
+    await bot.editMessageText(
+      formatIgnoreRuleOffer(description),
+      {
+        chat_id: chatId,
+        message_id: messageId,
+        parse_mode: 'MarkdownV2',
+        reply_markup: buildCreateIgnoreRuleKeyboard(transactionId)
+      }
+    );
+  } else {
+    await bot.editMessageText(
+      formatIgnoreMessage(),
+      {
+        chat_id: chatId,
+        message_id: messageId,
+        parse_mode: 'Markdown'
+      }
+    );
+  }
+
+  await bot.answerCallbackQuery(query.id, { text: '✅ התעלם' });
+}
+
+/**
+ * יצירת חוק התעלמות קבוע
+ * Format: create_ignore_rule:{transactionId}
+ */
+async function handleCreateIgnoreRuleAction(query: CallbackQuery, params: string[]): Promise<void> {
+  const bot = getTelegramBot();
+  const [transactionId] = params;
+  const chatId = query.message!.chat.id;
+  const messageId = query.message!.message_id;
+
+  console.log(`  → Create ignore rule: ${transactionId}`);
+
+  const description = ignoreFlowState.get(transactionId) || '';
+  ignoreFlowState.delete(transactionId);
+
+  const userId = chatId.toString() === process.env.TELEGRAM_CHAT_ID_TOM
+    ? 'usr_tom_001'
+    : 'usr_yael_001';
+
+  const { AirtableHelper } = await import('../classification/airtable-helper');
+  const airtableHelper = new AirtableHelper();
+  await airtableHelper.createIgnoreRule(description, userId);
+
+  await bot.editMessageText(
+    formatIgnoreRuleCreated(),
+    {
+      chat_id: chatId,
+      message_id: messageId,
+      parse_mode: 'MarkdownV2'
+    }
+  );
+
+  await bot.answerCallbackQuery(query.id, { text: '✅ חוק נוצר' });
+}
+
+/**
+ * דילוג על יצירת חוק התעלמות
+ * Format: skip_ignore_rule:{transactionId}
+ */
+async function handleSkipIgnoreRuleAction(query: CallbackQuery, params: string[]): Promise<void> {
+  const bot = getTelegramBot();
+  const [transactionId] = params;
+  const chatId = query.message!.chat.id;
+  const messageId = query.message!.message_id;
+
+  console.log(`  → Skip ignore rule: ${transactionId}`);
+
+  ignoreFlowState.delete(transactionId);
+
+  await bot.editMessageText(
+    formatIgnoreMessage(),
+    {
+      chat_id: chatId,
+      message_id: messageId,
+      parse_mode: 'Markdown'
+    }
+  );
+
+  await bot.answerCallbackQuery(query.id, { text: 'בוטל' });
 }
 
 /**
