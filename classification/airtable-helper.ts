@@ -33,15 +33,11 @@ export class AirtableHelper {
   private readonly INCOME_CATEGORY_FIELD = process.env.AIRTABLE_INCOME_CATEGORY_FIELD || 'מקור הכנסה';
   private readonly INCOME_AMOUNT_FIELD = process.env.AIRTABLE_INCOME_AMOUNT_FIELD || 'סכום הזנה';
   private readonly INCOME_DESCRIPTION_FIELD = process.env.AIRTABLE_INCOME_DESCRIPTION_FIELD || 'תיאור/הערות';
-  private readonly INCOME_VAT_TYPE_FIELD = process.env.AIRTABLE_INCOME_VAT_TYPE_FIELD || 'הזנה עם או בלי מע"מ';
-
   // Expense table fields
   private readonly EXPENSE_DATE_FIELD = process.env.AIRTABLE_EXPENSE_DATE_FIELD || 'תאריך';
   private readonly EXPENSE_CATEGORY_FIELD = process.env.AIRTABLE_EXPENSE_CATEGORY_FIELD || 'מקור הוצאה';
   private readonly EXPENSE_AMOUNT_FIELD = process.env.AIRTABLE_EXPENSE_AMOUNT_FIELD || 'סכום הזנה';
   private readonly EXPENSE_DESCRIPTION_FIELD = process.env.AIRTABLE_EXPENSE_DESCRIPTION_FIELD || 'הערות נוספות';
-  private readonly EXPENSE_VAT_TYPE_FIELD = process.env.AIRTABLE_EXPENSE_VAT_TYPE_FIELD || 'הזנה עם או בלי מע"מ';
-
   // Category table fields
   private readonly CATEGORY_NAME_FIELD = process.env.AIRTABLE_CATEGORY_NAME_FIELD || 'שם';
   private readonly CATEGORY_STATUS_FIELD = process.env.AIRTABLE_CATEGORY_STATUS_FIELD || 'סטטוס';
@@ -136,16 +132,11 @@ export class AirtableHelper {
     source: 'sumit' | 'client' | 'rule' | 'manual',
     vatIncluded?: boolean
   ): Promise<string> {
-    // vatIncluded מגיע מ-Sumit ישירות (אם זמין), אחרת לוגיקת ברירת מחדל:
-    // רק לקוחות תום כוללים מע"מ; יעל + שאר המקורות — ללא מע"מ
-    const resolvedVatIncluded = vatIncluded ?? (source === 'client' && entity === 'עסק תום');
-    const vatType = resolvedVatIncluded ? 'כולל מע"מ' : 'לפני/ללא מע"מ';
     const record = await this.base(this.INCOME_TABLE).create({
       [this.INCOME_DATE_FIELD]: transaction.date,
       [this.INCOME_CATEGORY_FIELD]: [categoryId], // Link field - must be array
       [this.INCOME_AMOUNT_FIELD]: Math.abs(transaction.amount),
       [this.INCOME_DESCRIPTION_FIELD]: `${transaction.description} (סווג: ${source})`,
-      [this.INCOME_VAT_TYPE_FIELD]: vatType,
     });
 
     console.log(`  ✅ Created income record: ${record.id} (${source})`);
@@ -169,7 +160,6 @@ export class AirtableHelper {
       [this.EXPENSE_CATEGORY_FIELD]: [categoryId], // Link field - must be array
       [this.EXPENSE_AMOUNT_FIELD]: amount,
       [this.EXPENSE_DESCRIPTION_FIELD]: `${transaction.description} (סווג: ${source})`,
-      [this.EXPENSE_VAT_TYPE_FIELD]: 'לפני/ללא מע"מ',
     });
 
     if (overrideAmount !== undefined) {
