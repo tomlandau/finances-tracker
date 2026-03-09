@@ -212,6 +212,11 @@ export class ScraperManager {
       return true;
     }
 
+    // חיוב מקס בחשבון הבנק
+    if (desc.includes('מקס איט חיוב')) {
+      return true;
+    }
+
     return false;
   }
 
@@ -225,6 +230,11 @@ export class ScraperManager {
     const filtered = txns.filter(txn => {
       if (this.shouldIgnoreTransaction(txn.description)) {
         console.log(`  🚫 Ignoring transaction: "${txn.description}"`);
+        return false;
+      }
+      // Skip pending transactions - chargedAmount is 0, will reappear when completed
+      if (txn.status === 'pending') {
+        console.log(`  ⏳ Skipping pending transaction: "${txn.description}" (${txn.originalAmount} ${txn.originalCurrency})`);
         return false;
       }
       return true;
