@@ -37,7 +37,17 @@ export class Classifier {
    */
   static isPaymentApp(description: string): boolean {
     const lower = description.toLowerCase();
-    return Classifier.PAYMENT_APP_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()));
+    return Classifier.PAYMENT_APP_KEYWORDS.some(kw => {
+      const kwLower = kw.toLowerCase();
+      // For short Hebrew keywords like 'ביט', require word boundary to avoid
+      // matching substrings (e.g. 'ביטוח לאומי' should NOT match 'ביט')
+      const idx = lower.indexOf(kwLower);
+      if (idx === -1) return false;
+      const after = lower[idx + kwLower.length];
+      // Not a match if immediately followed by a letter (part of a longer word)
+      if (after && /[\u05d0-\u05eaa-z]/.test(after)) return false;
+      return true;
+    });
   }
 
   /**
