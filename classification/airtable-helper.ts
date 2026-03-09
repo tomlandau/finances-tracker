@@ -128,9 +128,9 @@ export class AirtableHelper {
   async createIncomeRecord(
     transaction: Transaction,
     categoryId: string,
-    entity: string,
+    _entity: string,
     source: 'sumit' | 'client' | 'rule' | 'manual',
-    vatIncluded?: boolean
+    _vatIncluded?: boolean
   ): Promise<string> {
     const record = await this.base(this.INCOME_TABLE).create({
       [this.INCOME_DATE_FIELD]: transaction.date,
