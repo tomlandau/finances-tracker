@@ -36,6 +36,10 @@ export function buildInitialClassificationKeyboard(
       {
         text: '💼 הכנסה - עסק יעל',
         callback_data: `classify:${transactionId}:income:עסק יעל`
+      },
+      {
+        text: '🤝 הכנסה - משותף',
+        callback_data: `classify:${transactionId}:income:עסק - משותף`
       }
     ]);
   } else {

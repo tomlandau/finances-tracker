@@ -1,6 +1,7 @@
 export type TabId =
   | 'tom-income'
   | 'yael-income'
+  | 'shared-income'
   | 'tom-business'
   | 'yael-business'
   | 'shared-business'
@@ -11,7 +12,7 @@ export interface TabConfig {
   label: string;
   transactionType: 'income' | 'expense';
   filters: {
-    owner?: 'תום' | 'יעל';         // For income categories
+    owner?: 'תום' | 'יעל' | 'משותף'; // For income categories
     businessHome?: string;         // For expense categories
   };
 }

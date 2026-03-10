@@ -91,7 +91,8 @@ export class CredentialsManager {
         companyType,
         credentials: creds,
         accountName,
-        userId
+        userId,
+        accountNumbers: creds.accountNumbers,
       });
 
       console.log(`✅ Loaded credentials for ${accountName}`);

@@ -14,6 +14,12 @@ export const TAB_CONFIGS: TabConfig[] = [
     filters: { owner: 'יעל' },
   },
   {
+    id: 'shared-income',
+    label: 'הכנסות משותף',
+    transactionType: 'income',
+    filters: { owner: 'משותף' },
+  },
+  {
     id: 'tom-business',
     label: 'הוצאות עסק תום',
     transactionType: 'expense',
