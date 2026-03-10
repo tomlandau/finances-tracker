@@ -13,7 +13,7 @@ import { getEntityEmoji, getTypeEmoji } from './keyboards';
  * Escape special Markdown characters for Telegram
  * Prevents parsing errors when transaction descriptions contain *, _, [, etc.
  */
-function escapeMarkdown(text: string): string {
+export function escapeMarkdown(text: string): string {
   if (typeof text !== 'string') {
     text = String(text ?? '');
   }
