@@ -274,6 +274,64 @@ export function formatHelpMessage(): string {
   `.trim();
 }
 
+// ─── Auto-Classification Digest ───────────────────────────────────────────────
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+export interface AutoClassificationItem {
+  description: string;
+  amount: number;
+  date: string;        // "DD/MM/YYYY"
+  category: string;
+  entity: string;
+  method: string;      // "rule" | "sumit" | "client_match" | ...
+  rulePattern?: string;
+  confidence?: string;
+  isPaymentApp: boolean;
+}
+
+const MAX_DIGEST_ITEMS = 15;
+
+export function formatAutoClassificationDigest(items: AutoClassificationItem[]): string | null {
+  if (items.length === 0) return null;
+
+  const displayed = items.slice(0, MAX_DIGEST_ITEMS);
+  const overflow = items.length - displayed.length;
+
+  const lines: string[] = [`🤖 סיווגים אוטומטיים (${items.length} תנועות)\n`];
+
+  displayed.forEach((item, i) => {
+    const amountStr = item.amount < 0
+      ? `-₪${Math.abs(item.amount)}`
+      : `₪${item.amount}`;
+    const type = item.amount < 0 ? 'הוצאה' : 'הכנסה';
+
+    lines.push(`${i + 1}. ${amountStr} | ${item.date}`);
+    lines.push(`   📝 ${escapeHtml(item.description)}`);
+    lines.push(`   ➡️ ${escapeHtml(item.category)} (${type}) | ${escapeHtml(item.entity)}`);
+
+    if (item.rulePattern || item.confidence) {
+      const pattern = item.rulePattern ? `"${escapeHtml(item.rulePattern)}"` : '';
+      const confidence = item.confidence ? `ביטחון: ${escapeHtml(item.confidence)}` : '';
+      lines.push(`   📐 חוק: ${pattern} | ${confidence}`);
+    }
+
+    if (item.isPaymentApp) {
+      lines.push(`   ⚠️ אפליקציית תשלום!`);
+    }
+
+    lines.push('');
+  });
+
+  if (overflow > 0) {
+    lines.push(`ועוד ${overflow}...`);
+  }
+
+  return lines.join('\n').trim();
+}
+
 /**
  * הודעת סטטיסטיקות (placeholder)
  */
