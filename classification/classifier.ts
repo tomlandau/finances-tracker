@@ -2,7 +2,7 @@ import { AirtableHelper } from './airtable-helper';
 import { SumitClient } from './sumit-client';
 import { ClientsMatcher } from './clients-matcher';
 import { RulesEngine } from './rules-engine';
-import type { Transaction, ClassificationResult, ClassificationRule } from './types';
+import type { Transaction, ClassificationResult, ClassificationRule, ClassificationTrail, ClassificationTrailStep } from './types';
 
 /**
  * Classifier - המנצח של מנוע הסיווג
@@ -57,14 +57,33 @@ export class Classifier {
   async classifyTransaction(transaction: Transaction): Promise<ClassificationResult> {
     console.log(`\n🔍 Classifying transaction: ${transaction.description} (₪${transaction.amount})`);
 
+    const trail: ClassificationTrail = {
+      transactionId: transaction.id,
+      description: transaction.description,
+      amount: transaction.amount,
+      steps: [],
+      finalMethod: 'failed',
+      finalSuccess: false,
+    };
+
+    const addStep = (step: ClassificationTrailStep) => trail.steps.push(step);
+
+    const finalize = (result: ClassificationResult): ClassificationResult => {
+      trail.finalMethod = result.method;
+      trail.finalSuccess = result.success;
+      console.log('[CLASSIFICATION_TRAIL]', JSON.stringify(trail));
+      return { ...result, trail };
+    };
+
     try {
       // Layer 0: Check if income already recorded (prevent duplicates)
-      // כשמנפיקים חשבונית, ההכנסה כבר בטבלת הכנסות - לא ליצור רשומה כפולה
       if (transaction.amount > 0) {
+        const t0 = Date.now();
         const existingRecordId = await this.airtableHelper.findExistingIncomeRecord(
           Math.abs(transaction.amount),
           transaction.date
         );
+        addStep({ layer: 'layer0_income_dup', tried: true, matched: !!existingRecordId, durationMs: Date.now() - t0, detail: existingRecordId ? `found existing record ${existingRecordId}` : 'no duplicate found' });
 
         if (existingRecordId) {
           console.log(`  ✅ Income already recorded in income table - linking and skipping`);
@@ -74,24 +93,25 @@ export class Classifier {
             existingRecordId,
             null
           );
-          return {
+          return finalize({
             success: true,
             method: 'already_recorded',
             category: null,
             entity: null,
             confidence: 'מאושר',
             metadata: { existingRecordId, alreadyRecorded: true }
-          };
+          });
         }
       }
 
-      // Layer 0b: Check if expense already recorded (prevent duplicates for manual/recurring entries)
-      // כשמזינים הוצאה ידנית או כשיש הוצאה מחזורית מוגדרת - לא לבקש סיווג מחדש
+      // Layer 0b: Check if expense already recorded
       if (transaction.amount < 0) {
+        const t0 = Date.now();
         const existingExpenseId = await this.airtableHelper.findExistingExpenseRecord(
           Math.abs(transaction.amount),
           transaction.date
         );
+        addStep({ layer: 'layer0b_expense_dup', tried: true, matched: !!existingExpenseId, durationMs: Date.now() - t0, detail: existingExpenseId ? `found existing record ${existingExpenseId}` : 'no duplicate found' });
 
         if (existingExpenseId) {
           console.log(`  ✅ Expense already recorded in expense table - updating amount and linking`);
@@ -102,52 +122,64 @@ export class Classifier {
             existingExpenseId,
             null
           );
-          return {
+          return finalize({
             success: true,
             method: 'already_recorded',
             category: null,
             entity: null,
             confidence: 'מאושר',
             metadata: { existingExpenseId, alreadyRecorded: true }
-          };
+          });
         }
       }
 
       // Layer 1: Try Sumit API (only for income)
       if (transaction.amount > 0 && this.sumitClient.isEnabled()) {
+        const t0 = Date.now();
         const sumitResult = await this.trySumit(transaction);
+        addStep({ layer: 'layer1_sumit', tried: true, matched: !!sumitResult, durationMs: Date.now() - t0, detail: sumitResult ? `matched sumit invoice` : 'no invoice found' });
         if (sumitResult) {
-          return sumitResult;
+          return finalize(sumitResult);
         }
+      } else if (transaction.amount > 0) {
+        addStep({ layer: 'layer1_sumit', tried: false, matched: false, detail: 'sumit disabled' });
       }
 
       // Layer 2: Try Client Airtable Bases (only for income)
       if (transaction.amount > 0 && this.clientsMatcher.isEnabled()) {
+        const t0 = Date.now();
         const clientResult = await this.tryClientMatch(transaction);
+        addStep({ layer: 'layer2_client', tried: true, matched: !!clientResult, durationMs: Date.now() - t0, detail: clientResult ? `matched client` : 'no client match' });
         if (clientResult) {
-          return clientResult;
+          return finalize(clientResult);
         }
+      } else if (transaction.amount > 0) {
+        addStep({ layer: 'layer2_client', tried: false, matched: false, detail: 'client matcher disabled' });
       }
 
       // Layer 3: Try Rules Engine (both income and expense)
-      const ruleResult = await this.tryRulesEngine(transaction);
-      if (ruleResult) {
-        return ruleResult;
+      {
+        const t0 = Date.now();
+        const ruleResult = await this.tryRulesEngine(transaction);
+        addStep({ layer: 'layer3_rules', tried: true, matched: !!ruleResult, durationMs: Date.now() - t0, detail: ruleResult ? `pattern '${(ruleResult.metadata as any)?.pattern ?? ''}' matched` : 'no rule matched' });
+        if (ruleResult) {
+          return finalize(ruleResult);
+        }
       }
 
-      // Layer 4: Failed - will trigger Telegram notification
+      // Layer 4: Failed
       console.log(`  ⚠️ No classification method succeeded - manual intervention required`);
-      return {
+      return finalize({
         success: false,
         method: 'failed',
         category: null,
         entity: null,
         confidence: 'אוטומטי'
-      };
+      });
 
     } catch (error) {
       console.error('❌ Classification error:', error);
-      return {
+      return finalize({
         success: false,
         method: 'failed',
         category: null,
@@ -156,7 +188,7 @@ export class Classifier {
         metadata: {
           error: error instanceof Error ? error.message : 'Unknown error'
         }
-      };
+      });
     }
   }
 

@@ -4,6 +4,23 @@
  * TypeScript interfaces for the transaction classification system
  */
 
+export interface ClassificationTrailStep {
+  layer: string;       // "layer0_income_dup" | "layer0b_expense_dup" | "layer1_sumit" | "layer2_client" | "layer3_rules"
+  tried: boolean;
+  matched: boolean;
+  detail?: string;     // e.g. "pattern 'best' matched", "no invoice found"
+  durationMs?: number;
+}
+
+export interface ClassificationTrail {
+  transactionId: string;
+  description: string;
+  amount: number;
+  steps: ClassificationTrailStep[];
+  finalMethod: string;
+  finalSuccess: boolean;
+}
+
 export interface ClassificationResult {
   success: boolean;
   method: 'sumit' | 'client_match' | 'rule' | 'manual' | 'already_recorded' | 'ignored' | 'failed';
@@ -16,6 +33,7 @@ export interface ClassificationResult {
   confidence: 'אוטומטי' | 'מאושר';
   ruleId?: string;
   metadata?: any;
+  trail?: ClassificationTrail;
 }
 
 export interface Transaction {

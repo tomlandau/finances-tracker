@@ -6,7 +6,9 @@ import {
   formatClassificationSuccess,
   formatIgnoreMessage,
   formatIgnoreRuleOffer,
+  formatAutoClassificationDigest,
 } from '../../../telegram/messages';
+import type { AutoClassificationItem } from '../../../telegram/messages';
 import type { Transaction } from '../../../classification/types';
 
 const makeTransaction = (amount: number): Transaction => ({
@@ -108,6 +110,59 @@ describe('messages', () => {
     it('contains the description', () => {
       const msg = formatIgnoreRuleOffer('שירות אינטרנט');
       expect(msg).toContain('שירות אינטרנט');
+    });
+  });
+
+  describe('formatAutoClassificationDigest', () => {
+    const makeItem = (overrides: Partial<AutoClassificationItem> = {}): AutoClassificationItem => ({
+      description: 'תשלום לסופר',
+      amount: 100,
+      date: '10/03/2026',
+      category: 'מזון',
+      entity: 'עסק תום',
+      method: 'rule',
+      rulePattern: 'סופר',
+      confidence: 'מאושר',
+      isPaymentApp: false,
+      ...overrides,
+    });
+
+    it('C1.1 - returns null for empty array', () => {
+      expect(formatAutoClassificationDigest([])).toBeNull();
+    });
+
+    it('C1.2 - single income item contains amount, date, category, rule pattern, confidence', () => {
+      const msg = formatAutoClassificationDigest([makeItem()]);
+      expect(msg).not.toBeNull();
+      expect(msg).toContain('₪100');
+      expect(msg).toContain('10/03/2026');
+      expect(msg).toContain('מזון');
+      expect(msg).toContain('סופר');
+      expect(msg).toContain('מאושר');
+      expect(msg).toContain('הכנסה');
+    });
+
+    it('C1.3 - negative amount shown as expense', () => {
+      const msg = formatAutoClassificationDigest([makeItem({ amount: -89 })]);
+      expect(msg).toContain('הוצאה');
+    });
+
+    it('C1.4 - payment app item includes warning flag', () => {
+      const msg = formatAutoClassificationDigest([makeItem({ isPaymentApp: true })]);
+      expect(msg).toContain('⚠️');
+      expect(msg).toContain('אפליקציית תשלום');
+    });
+
+    it('C1.5 - 16 items are truncated to 15 with overflow note', () => {
+      const items = Array.from({ length: 16 }, (_, i) => makeItem({ description: `תנועה ${i}` }));
+      const msg = formatAutoClassificationDigest(items);
+      expect(msg).toContain('ועוד 1');
+    });
+
+    it('C1.6 - HTML special chars in description are escaped', () => {
+      const msg = formatAutoClassificationDigest([makeItem({ description: '<script>&test</script>' })]);
+      expect(msg).toContain('&lt;script&gt;&amp;test&lt;/script&gt;');
+      expect(msg).not.toContain('<script>');
     });
   });
 });

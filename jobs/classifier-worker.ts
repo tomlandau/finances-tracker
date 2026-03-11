@@ -3,7 +3,8 @@ import { Classifier } from '../classification/classifier';
 import { sendTelegramNotification } from '../lib/utils-telegram';
 import { getTelegramBot } from '../telegram/bot';
 import { buildInitialClassificationKeyboard } from '../telegram/keyboards';
-import { formatTransactionMessage, formatPaymentAppTransactionMessage, formatHourlySummary, formatClassifierError } from '../telegram/messages';
+import { formatTransactionMessage, formatPaymentAppTransactionMessage, formatHourlySummary, formatClassifierError, formatAutoClassificationDigest } from '../telegram/messages';
+import type { AutoClassificationItem } from '../telegram/messages';
 import type { Transaction } from '../classification/types';
 
 /**
@@ -84,6 +85,7 @@ async function runClassifierWorker(): Promise<void> {
     let autoClassified = 0;
     let manualRequired = 0;
     const failedTransactions: { transaction: Transaction; error: string }[] = [];
+    const autoClassifiedDetails: AutoClassificationItem[] = [];
 
     // Step 2: Try to classify each transaction
     for (const transaction of pendingTransactions) {
@@ -95,6 +97,17 @@ async function runClassifierWorker(): Promise<void> {
         if (result.success) {
           autoClassified++;
           console.log(`  ✅ Auto-classified via ${result.method}`);
+          autoClassifiedDetails.push({
+            description: transaction.description,
+            amount: transaction.amount,
+            date: transaction.date.split('-').reverse().join('/'),
+            category: result.category?.name ?? '',
+            entity: result.entity ?? '',
+            method: result.method,
+            rulePattern: (result.metadata as any)?.pattern,
+            confidence: result.confidence,
+            isPaymentApp: Classifier.isPaymentApp(transaction.description),
+          });
         } else {
           // Send to Telegram for manual classification
           manualRequired++;
@@ -110,6 +123,21 @@ async function runClassifierWorker(): Promise<void> {
           transaction,
           error: errorMessage
         });
+      }
+    }
+
+    // Send auto-classification digest to Tom only
+    if (autoClassifiedDetails.length > 0) {
+      try {
+        const digestMsg = formatAutoClassificationDigest(autoClassifiedDetails);
+        if (digestMsg) {
+          await sendTelegramNotification({
+            message: digestMsg,
+            chatIds: [process.env.TELEGRAM_CHAT_ID_TOM!],
+          });
+        }
+      } catch (e) {
+        console.error('[DIGEST_ERROR]', e);
       }
     }
 
@@ -229,6 +257,7 @@ export async function runClassifierManually(): Promise<{
     let autoClassified = 0;
     let manualRequired = 0;
     let errors = 0;
+    const autoClassifiedDetails: AutoClassificationItem[] = [];
 
     for (const transaction of pendingTransactions) {
       try {
@@ -236,6 +265,17 @@ export async function runClassifierManually(): Promise<{
 
         if (result.success) {
           autoClassified++;
+          autoClassifiedDetails.push({
+            description: transaction.description,
+            amount: transaction.amount,
+            date: transaction.date.split('-').reverse().join('/'),
+            category: result.category?.name ?? '',
+            entity: result.entity ?? '',
+            method: result.method,
+            rulePattern: (result.metadata as any)?.pattern,
+            confidence: result.confidence,
+            isPaymentApp: Classifier.isPaymentApp(transaction.description),
+          });
         } else {
           manualRequired++;
           await sendClassificationRequest(transaction);
@@ -243,6 +283,21 @@ export async function runClassifierManually(): Promise<{
       } catch (error) {
         errors++;
         console.error('Transaction processing error:', error);
+      }
+    }
+
+    // Send auto-classification digest to Tom only
+    if (autoClassifiedDetails.length > 0) {
+      try {
+        const digestMsg = formatAutoClassificationDigest(autoClassifiedDetails);
+        if (digestMsg) {
+          await sendTelegramNotification({
+            message: digestMsg,
+            chatIds: [process.env.TELEGRAM_CHAT_ID_TOM!],
+          });
+        }
+      } catch (e) {
+        console.error('[DIGEST_ERROR]', e);
       }
     }
 
