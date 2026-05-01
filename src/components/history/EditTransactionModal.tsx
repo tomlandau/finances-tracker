@@ -19,7 +19,7 @@ export function EditTransactionModal({ transaction, onSuccess, onCancel }: EditT
   const incomeCategories = categoriesContext?.incomeCategories || [];
   const expenseCategories = categoriesContext?.expenseCategories || [];
   const [formData, setFormData] = useState({
-    amount: transaction.amount.toString(),
+    amount: (transaction.amount ?? 0).toString(),
     categoryId: transaction.categoryId,
     date: transaction.date,
     vat: transaction.vat || '0',
