@@ -123,40 +123,53 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 // Initialize jobs and services (production only)
+// Feature flags: ENABLE_SCRAPER_CRON / ENABLE_TELEGRAM_BOT (set to "true" to enable).
+// Both default to off so the workflow is now manual via the process-statement skill.
 if (process.env.NODE_ENV === 'production') {
+  const enableScraperCron = process.env.ENABLE_SCRAPER_CRON === 'true';
+  const enableTelegramBot = process.env.ENABLE_TELEGRAM_BOT === 'true';
+
   try {
-    // Initialize Telegram notification bot (polling off)
-    initTelegramBot();
+    if (enableTelegramBot) {
+      // Initialize Telegram notification bot (polling off)
+      initTelegramBot();
 
-    // Validate Telegram chat IDs
-    console.log('🔍 Validating Telegram chat IDs...');
-    validateChatIds().then(result => {
-      if (result.invalid.length > 0) {
-        console.error('\n⚠️⚠️⚠️ CRITICAL: Invalid Telegram chat IDs detected! ⚠️⚠️⚠️');
-        console.error('The following chat IDs are invalid and will cause log spam:');
-        result.invalid.forEach(({ chatId, error }) => {
-          console.error(`  ❌ Chat ID ${chatId}: ${error}`);
-        });
-        console.error('\n📝 To fix this:');
-        console.error('  1. Message your bot on Telegram');
-        console.error(`  2. Visit: https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN?.substring(0, 10)}...YOUR_BOT_TOKEN.../getUpdates`);
-        console.error('  3. Find your chat.id in the response');
-        console.error('  4. Update TELEGRAM_CHAT_ID_TOM or TELEGRAM_CHAT_ID_YAEL in Railway environment variables\n');
-      } else {
-        console.log('✅ All Telegram chat IDs are valid');
-      }
-    }).catch(error => {
-      console.error('❌ Failed to validate chat IDs:', error);
-    });
+      // Validate Telegram chat IDs
+      console.log('🔍 Validating Telegram chat IDs...');
+      validateChatIds().then(result => {
+        if (result.invalid.length > 0) {
+          console.error('\n⚠️⚠️⚠️ CRITICAL: Invalid Telegram chat IDs detected! ⚠️⚠️⚠️');
+          console.error('The following chat IDs are invalid and will cause log spam:');
+          result.invalid.forEach(({ chatId, error }) => {
+            console.error(`  ❌ Chat ID ${chatId}: ${error}`);
+          });
+          console.error('\n📝 To fix this:');
+          console.error('  1. Message your bot on Telegram');
+          console.error(`  2. Visit: https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN?.substring(0, 10)}...YOUR_BOT_TOKEN.../getUpdates`);
+          console.error('  3. Find your chat.id in the response');
+          console.error('  4. Update TELEGRAM_CHAT_ID_TOM or TELEGRAM_CHAT_ID_YAEL in Railway environment variables\n');
+        } else {
+          console.log('✅ All Telegram chat IDs are valid');
+        }
+      }).catch(error => {
+        console.error('❌ Failed to validate chat IDs:', error);
+      });
 
-    // Initialize Telegram interactive bot (polling on) - Phase 2
-    initTelegramBotPolling();
+      // Initialize Telegram interactive bot (polling on) - Phase 2
+      initTelegramBotPolling();
+    } else {
+      console.log('⏸  Telegram bot disabled (set ENABLE_TELEGRAM_BOT=true to enable)');
+    }
 
-    // Start daily scraper cron job (04:00 UTC)
-    startDailyScraperJob();
+    if (enableScraperCron) {
+      // Start daily scraper cron job (04:00 UTC)
+      startDailyScraperJob();
 
-    // Start classifier worker cron job (daily 07:00 Israel) - Phase 2
-    startClassifierWorker();
+      // Start classifier worker cron job (daily 07:00 Israel) - Phase 2
+      startClassifierWorker();
+    } else {
+      console.log('⏸  Scraper cron disabled (set ENABLE_SCRAPER_CRON=true to enable)');
+    }
 
     console.log('✅ Jobs and services initialized');
   } catch (error) {
