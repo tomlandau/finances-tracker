@@ -4,6 +4,7 @@ import type { Transaction } from '@/types/history.types';
 import type { TabFilters } from '@/types/filter.types';
 import { api } from '@/services/api';
 import { CategoriesContext } from '@/context/CategoriesContext';
+import { getMonthDateRange } from '@/utils/dateRange';
 
 export function useTabTransactions(tab: TabConfig, selectedMonth: string, filters?: TabFilters) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -49,14 +50,7 @@ export function useTabTransactions(tab: TabConfig, selectedMonth: string, filter
       ];
     }
 
-    const [year, month] = selectedMonth.split('-').map(Number);
-    const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 0); // Last day of selected month
-
-    const startStr = start.toISOString().split('T')[0];
-    const endStr = end.toISOString().split('T')[0];
-
-    return [startStr, endStr];
+    return getMonthDateRange(selectedMonth);
   }, [selectedMonth, filters?.dateRange]);
 
   const fetchTransactions = useCallback(async () => {
