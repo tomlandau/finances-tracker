@@ -15,15 +15,15 @@ import type { Transaction } from '@/types/history.types';
 import type { OptimisticTransactionHandlers } from '@/components/transaction/TabView';
 import { VAT_OPTIONS, VAT_TYPE_OPTIONS, DEFAULT_VAT, DEFAULT_VAT_TYPE } from '@/utils/constants';
 
-const INITIAL_FORM_STATE: IncomeFormData = {
+const getInitialFormState = (owner?: string): IncomeFormData => ({
   amount: '',
   categoryId: '',
   date: format(new Date(), 'yyyy-MM-dd'),
-  vat: DEFAULT_VAT,
+  vat: owner === 'יעל' ? '0' : DEFAULT_VAT,
   vatType: DEFAULT_VAT_TYPE,
   description: '',
   isRecurring: false
-};
+});
 
 interface IncomeFormProps {
   filterOwner?: string;
@@ -32,7 +32,8 @@ interface IncomeFormProps {
 }
 
 export function IncomeForm({ filterOwner, onSuccess, optimisticHandlers }: IncomeFormProps = {}) {
-  const [formData, setFormData] = useState<IncomeFormData>(INITIAL_FORM_STATE);
+  const isYaelIncome = filterOwner === 'יעל';
+  const [formData, setFormData] = useState<IncomeFormData>(() => getInitialFormState(filterOwner));
   const [categoryName, setCategoryName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>(undefined);
   const [success, setSuccess] = useState(false);
@@ -104,7 +105,7 @@ export function IncomeForm({ filterOwner, onSuccess, optimisticHandlers }: Incom
         optimisticHandlers.removeOptimisticTransaction(tempId);
       }
 
-      setFormData(INITIAL_FORM_STATE);
+      setFormData(getInitialFormState(filterOwner));
       setCategoryName('');
       setSelectedCategory(undefined);
       setSuccess(true);
@@ -181,19 +182,21 @@ export function IncomeForm({ filterOwner, onSuccess, optimisticHandlers }: Incom
       />
 
       <Select
-        label='מע"מ'
+        label={`מע"מ${isYaelIncome ? ' (יעל — פטורה)' : ''}`}
         value={formData.vat}
         onChange={(e) => setFormData(prev => ({ ...prev, vat: e.target.value }))}
         options={VAT_OPTIONS}
         required
+        disabled={isYaelIncome}
       />
 
       <Select
-        label='הזנה עם או בלי מע"מ'
+        label={`הזנה עם או בלי מע"מ${isYaelIncome ? ' (יעל — פטורה)' : ''}`}
         value={formData.vatType}
         onChange={(e) => setFormData(prev => ({ ...prev, vatType: e.target.value }))}
         options={VAT_TYPE_OPTIONS}
         required
+        disabled={isYaelIncome}
       />
 
       <VatPreview

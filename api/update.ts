@@ -50,7 +50,7 @@ export default withAuth(async (
         return res.status(400).json({ error: 'Invalid VAT rate' });
       }
 
-      if (fields.vatType !== undefined && !['לפני/ללא מע"מ', 'לא כולל מע"מ'].includes(fields.vatType)) {
+      if (fields.vatType !== undefined && !['לפני/ללא מע"מ', 'כולל מע"מ'].includes(fields.vatType)) {
         return res.status(400).json({ error: 'Invalid VAT type' });
       }
     }

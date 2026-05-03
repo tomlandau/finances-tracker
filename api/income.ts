@@ -37,7 +37,7 @@ export default withAuth(async (
     if (!vat || !['0', '0.18'].includes(vat)) {
       return res.status(400).json({ error: 'Invalid VAT rate' });
     }
-    if (!vatType || !['לפני/ללא מע"מ', 'לא כולל מע"מ'].includes(vatType)) {
+    if (!vatType || !['לפני/ללא מע"מ', 'כולל מע"מ'].includes(vatType)) {
       return res.status(400).json({ error: 'Invalid VAT type' });
     }
 
