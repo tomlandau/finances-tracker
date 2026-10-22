@@ -17,7 +17,7 @@
     "test:coverage": "vitest run --coverage",
     "test:auth": "bash test-auth.sh",
     "encrypt-creds": "tsx scripts/encrypt-credentials.ts",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "keywords": [],
   "author": "",
